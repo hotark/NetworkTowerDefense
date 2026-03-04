@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Cannon Lv4: サイド砲身追加+二重コア+フル装甲 -->
+  <!-- メイン砲身（大型） -->
+  <rect x="19" y="2" width="10" height="20" rx="2" fill="#3a1144" stroke="#cc44ff" stroke-width="1.5"/>
+  <rect x="17" y="2" width="14" height="4.5" rx="2" fill="#cc44ff" opacity="0.8"/>
+  <rect x="20" y="2" width="8" height="2" fill="#ee88ff" opacity="0.5"/>
+  <!-- サイド砲身（小） -->
+  <rect x="12" y="6" width="3.5" height="12" rx="1" fill="#2a0d33" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="33" y="6" width="3.5" height="12" rx="1" fill="#2a0d33" stroke="#cc44ff" stroke-width="0.8"/>
+  <rect x="11" y="5" width="5.5" height="2.5" rx="1" fill="#cc44ff" opacity="0.6"/>
+  <rect x="32" y="5" width="5.5" height="2.5" rx="1" fill="#cc44ff" opacity="0.6"/>
+  <!-- 船体（大型） -->
+  <path d="M8 20 L40 20 L44 32 L40 46 L8 46 L4 32 Z" fill="#2a1133" stroke="#cc44ff" stroke-width="2.2"/>
+  <!-- フル装甲プレート -->
+  <path d="M4 28 L1 26 L1 38 L4 40 Z" fill="#3a1844" stroke="#cc44ff" stroke-width="1"/>
+  <path d="M44 28 L47 26 L47 38 L44 40 Z" fill="#3a1844" stroke="#cc44ff" stroke-width="1"/>
+  <!-- 二重パワーコア -->
+  <circle cx="24" cy="33" r="8" fill="#1a0822" stroke="#cc44ff" stroke-width="1.8"/>
+  <circle cx="24" cy="33" r="5.5" fill="none" stroke="#cc44ff" stroke-width="0.8" opacity="0.5"/>
+  <circle cx="24" cy="33" r="4" fill="#cc44ff" opacity="0.4"/>
+  <circle cx="24" cy="33" r="2" fill="#ee88ff" opacity="0.7"/>
+  <!-- チャージインジケーター（2本） -->
+  <rect x="10" y="24" width="28" height="2" rx="1" fill="#cc44ff" opacity="0.4"/>
+  <rect x="14" y="28" width="20" height="1.5" rx="0.8" fill="#cc44ff" opacity="0.3"/>
+  <!-- エンジン（三連） -->
+  <rect x="12" y="44" width="5" height="3" rx="1" fill="#cc44ff" opacity="0.6"/>
+  <rect x="22" y="44" width="5" height="3" rx="1" fill="#cc44ff" opacity="0.4"/>
+  <rect x="31" y="44" width="5" height="3" rx="1" fill="#cc44ff" opacity="0.6"/>
+</svg>

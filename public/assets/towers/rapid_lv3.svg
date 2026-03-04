@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Rapid Lv3: 標準型 - オレンジ系 -->
+  <!-- 3連バレル -->
+  <rect x="16" y="4" width="3" height="16" rx="1" fill="#553300" stroke="#ff8800" stroke-width="0.8"/>
+  <rect x="23" y="2" width="3" height="18" rx="1" fill="#553300" stroke="#ff8800" stroke-width="0.8"/>
+  <rect x="30" y="4" width="3" height="16" rx="1" fill="#553300" stroke="#ff8800" stroke-width="0.8"/>
+  <!-- マズル -->
+  <rect x="15" y="3" width="5" height="2" rx="1" fill="#ff8800"/>
+  <rect x="22" y="1" width="5" height="2" rx="1" fill="#ff8800"/>
+  <rect x="29" y="3" width="5" height="2" rx="1" fill="#ff8800"/>
+  <!-- 船体 -->
+  <path d="M14 18 L34 18 L38 28 L36 42 L12 42 L10 28 Z" fill="#332200" stroke="#ff8800" stroke-width="1.5"/>
+  <!-- センターコア -->
+  <circle cx="24" cy="30" r="5" fill="#442800" stroke="#ff8800" stroke-width="1.2"/>
+  <circle cx="24" cy="30" r="2.5" fill="#ff8800" opacity="0.5"/>
+  <!-- 弾倉ライン -->
+  <rect x="14" y="34" width="20" height="2" rx="1" fill="#ff8800" opacity="0.4"/>
+  <rect x="16" y="38" width="16" height="2" rx="1" fill="#ff8800" opacity="0.3"/>
+  <!-- 左右フィン -->
+  <path d="M10 28 L4 32 L6 38 L12 36 Z" fill="#443000" stroke="#ff8800" stroke-width="1"/>
+  <path d="M38 28 L44 32 L42 38 L36 36 Z" fill="#443000" stroke="#ff8800" stroke-width="1"/>
+</svg>

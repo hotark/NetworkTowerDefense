@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Generator Lv3: 標準型 - 緑系 -->
+  <!-- 船体ベース -->
+  <path d="M24 4 L36 16 L36 36 L30 44 L18 44 L12 36 L12 16 Z" fill="#0a3322" stroke="#00ff88" stroke-width="1.5"/>
+  <!-- 左右ウィング -->
+  <path d="M12 18 L4 24 L4 30 L12 34 Z" fill="#0d4030" stroke="#00ff88" stroke-width="1"/>
+  <path d="M36 18 L44 24 L44 30 L36 34 Z" fill="#0d4030" stroke="#00ff88" stroke-width="1"/>
+  <!-- メインコア（発光） -->
+  <circle cx="24" cy="24" r="7" fill="#003318" stroke="#00ff88" stroke-width="1.5"/>
+  <circle cx="24" cy="24" r="4" fill="#00ff88" opacity="0.6"/>
+  <circle cx="24" cy="24" r="2" fill="#aaffcc"/>
+  <!-- エネルギーライン -->
+  <line x1="24" y1="10" x2="24" y2="17" stroke="#00ff88" stroke-width="1" opacity="0.7"/>
+  <line x1="24" y1="31" x2="24" y2="40" stroke="#00ff88" stroke-width="1" opacity="0.7"/>
+  <line x1="15" y1="24" x2="12" y2="24" stroke="#00ff88" stroke-width="1" opacity="0.7"/>
+  <line x1="33" y1="24" x2="36" y2="24" stroke="#00ff88" stroke-width="1" opacity="0.7"/>
+  <!-- 上部アンテナ -->
+  <rect x="22" y="2" width="4" height="4" rx="1" fill="#00cc66"/>
+</svg>

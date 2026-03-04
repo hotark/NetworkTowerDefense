@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Distributor Lv2: Lv1+4方向目ライン+コアが少し明るい -->
+  <!-- 胴体（Lv1とほぼ同じ） -->
+  <path d="M20 11 L28 11 L34 20 L34 35 L28 43 L20 43 L14 35 L14 20 Z" fill="#332a00" stroke="#ffaa00" stroke-width="1.2"/>
+  <!-- コア（少し明るい） -->
+  <circle cx="24" cy="26" r="5.5" fill="#221800" stroke="#ffaa00" stroke-width="1.2"/>
+  <circle cx="24" cy="26" r="2.5" fill="#ffaa00" opacity="0.45"/>
+  <circle cx="24" cy="26" r="1" fill="#ffddaa" opacity="0.6"/>
+  <!-- 4方向ライン（下方向追加） -->
+  <line x1="24" y1="20" x2="24" y2="15" stroke="#ffaa00" stroke-width="1" opacity="0.6"/>
+  <line x1="19" y1="26" x2="14" y2="26" stroke="#ffaa00" stroke-width="1" opacity="0.6"/>
+  <line x1="29" y1="26" x2="34" y2="26" stroke="#ffaa00" stroke-width="1" opacity="0.6"/>
+  <line x1="24" y1="32" x2="24" y2="37" stroke="#ffaa00" stroke-width="1" opacity="0.6"/>
+</svg>

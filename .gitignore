@@ -1,0 +1,25 @@
+# Environment & secrets
+.env
+.env.*
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# OS files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# Experimental / prototype
+mockup/

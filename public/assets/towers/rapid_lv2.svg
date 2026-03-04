@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Rapid Lv2: ツインバレル強化+弾倉ライン -->
+  <!-- 2連バレル（やや太め） -->
+  <rect x="18" y="4" width="3.5" height="16" rx="0.8" fill="#553300" stroke="#ff8800" stroke-width="0.8"/>
+  <rect x="27" y="4" width="3.5" height="16" rx="0.8" fill="#553300" stroke="#ff8800" stroke-width="0.8"/>
+  <!-- マズル -->
+  <rect x="17" y="3" width="5.5" height="2" rx="1" fill="#ff8800" opacity="0.8"/>
+  <rect x="26" y="3" width="5.5" height="2" rx="1" fill="#ff8800" opacity="0.8"/>
+  <!-- 船体 -->
+  <path d="M15 19 L34 19 L37 28 L35 42 L14 42 L12 28 Z" fill="#332200" stroke="#ff8800" stroke-width="1.4"/>
+  <!-- センターコア -->
+  <circle cx="24" cy="30" r="4.5" fill="#442800" stroke="#ff8800" stroke-width="1.2"/>
+  <circle cx="24" cy="30" r="2" fill="#ff8800" opacity="0.45"/>
+  <!-- 弾倉ライン -->
+  <rect x="15" y="35" width="19" height="2" rx="1" fill="#ff8800" opacity="0.35"/>
+  <!-- 小フィン -->
+  <path d="M12 28 L8 31 L9 36 L14 34 Z" fill="#443000" stroke="#ff8800" stroke-width="0.8" opacity="0.7"/>
+  <path d="M37 28 L41 31 L40 36 L35 34 Z" fill="#443000" stroke="#ff8800" stroke-width="0.8" opacity="0.7"/>
+</svg>

@@ -198,10 +198,10 @@ function findNodeAtSlot(state: GameState, sx: number, sy: number): TowerNode | n
 function drawGrid(ctx: CanvasRenderingContext2D, w: number, h: number): void {
   ctx.strokeStyle = '#0e1320';
   ctx.lineWidth = 1;
-  for (let x = 0; x < w; x += 40) {
+  for (let x = 0; x <= w; x += 40) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
   }
-  for (let y = 0; y < h; y += 40) {
+  for (let y = 0; y <= h; y += 40) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
   }
 }
@@ -732,28 +732,19 @@ function drawNodes(
       ctx.fillText(label, node.x, node.y - R - 8);
     }
 
-    // 保持中キュー表示
-    if (node.held.length > 0) {
+    // 保持中キュー表示（タワー上部にタワー色で表示）
+    if ((node.type === 'distributor' || node.type === 'repeater') && node.held.length >= 0) {
+      const qLen = node.held.length;
+      const qMax = config.DIST_REP_MAX_QUEUE;
+      const hStr = `${qLen}/${qMax}`;
       ctx.font = 'bold 9px Consolas, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      let hStr: string;
-      let hColor = '#00ffff';
-      if (node.type === 'distributor' || node.type === 'repeater') {
-        const qLen = node.held.length;
-        const qMax = config.DIST_REP_MAX_QUEUE;
-        hStr = `${qLen}/${qMax}`;
-        if (qLen >= qMax) hColor = '#ff4466';
-        else if (qLen >= qMax * 0.7) hColor = '#ffaa33';
-      } else {
-        const totalCharge = node.held.reduce((sum, h) => sum + h.charge, 0);
-        hStr = String(totalCharge);
-      }
-      const hw = ctx.measureText(hStr).width;
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(node.x + R + 6 - hw / 2 - 2, node.y - R - 1, hw + 4, 10);
+      let hColor = inactive ? INACTIVE_COLORS.label : c.stroke;
+      if (qLen >= qMax) hColor = '#ff4466';
+      else if (qLen >= qMax * 0.7) hColor = '#ffaa33';
       ctx.fillStyle = hColor;
-      ctx.fillText(hStr, node.x + R + 6, node.y - R + 4);
+      ctx.fillText(hStr, node.x, node.y - R - 8);
     }
 
     // タワーHPバー（ダメージ時のみ）

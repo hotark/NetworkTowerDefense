@@ -57,6 +57,7 @@ export interface GameConfig {
   readonly REPAIR_RATE_EDGE: number;
   readonly BASE_ATTACK: { readonly range: number; readonly cooldown: number; readonly damage: number };
   readonly DIST_REP_MAX_QUEUE: number;
+  readonly MAX_DEFENSE_HP: number;
 
   readonly towerLevels: Readonly<Record<NodeType, ReadonlyArray<TowerLevelStats>>>;
   readonly edgeLevels: ReadonlyArray<EdgeLevelStats>;
@@ -103,6 +104,7 @@ export const GAME_CONFIG: GameConfig = {
   REPAIR_RATE_EDGE: 20,
   BASE_ATTACK: { range: 120, cooldown: 2.0, damage: 10 },
   DIST_REP_MAX_QUEUE: 50,
+  MAX_DEFENSE_HP: 1000,
 
   // ── タワーレベル別ステータステーブル ──
   towerLevels: {
@@ -114,25 +116,25 @@ export const GAME_CONFIG: GameConfig = {
       { hp: 450, interval: 0.2,  holdTime: 0.1 },
     ],
     sniper: [
-      { hp:  80, range:  80, cooldown: 1.5,  damage:  50, holdTime: 0.05, ammoPerShot:  1 },
-      { hp: 110, range: 100, cooldown: 1.35, damage:  80, holdTime: 0.05, ammoPerShot:  3 },
-      { hp: 160, range: 130, cooldown: 1.15, damage: 140, holdTime: 0.05, ammoPerShot:  8 },
-      { hp: 240, range: 170, cooldown: 0.95, damage: 250, holdTime: 0.05, ammoPerShot: 15 },
-      { hp: 360, range: 200, cooldown: 0.75, damage: 500, holdTime: 0.05, ammoPerShot: 30 },
+      { hp:  80, range:  80, cooldown: 1.5,  damage:  50, holdTime: 0, ammoPerShot:  1 },
+      { hp: 110, range: 100, cooldown: 1.35, damage:  80, holdTime: 0, ammoPerShot:  3 },
+      { hp: 160, range: 130, cooldown: 1.15, damage: 140, holdTime: 0, ammoPerShot:  8 },
+      { hp: 240, range: 170, cooldown: 0.95, damage: 250, holdTime: 0, ammoPerShot: 15 },
+      { hp: 360, range: 200, cooldown: 0.75, damage: 500, holdTime: 0, ammoPerShot: 30 },
     ],
     rapid: [
-      { hp:  60, range: 100, cooldown: 0.4,  damage:  15, holdTime: 0.05, ammoPerShot: 1 },
-      { hp:  85, range: 110, cooldown: 0.34, damage:  24, holdTime: 0.05, ammoPerShot: 1 },
-      { hp: 120, range: 125, cooldown: 0.27, damage:  40, holdTime: 0.05, ammoPerShot: 2 },
-      { hp: 180, range: 145, cooldown: 0.2,  damage:  65, holdTime: 0.05, ammoPerShot: 3 },
-      { hp: 350, range: 180, cooldown: 0.14, damage: 120, holdTime: 0.05, ammoPerShot: 5 },
+      { hp:  60, range: 100, cooldown: 0.4,  damage:  15, holdTime: 0, ammoPerShot: 1 },
+      { hp:  85, range: 110, cooldown: 0.34, damage:  24, holdTime: 0, ammoPerShot: 1 },
+      { hp: 120, range: 125, cooldown: 0.27, damage:  40, holdTime: 0, ammoPerShot: 2 },
+      { hp: 180, range: 145, cooldown: 0.2,  damage:  65, holdTime: 0, ammoPerShot: 3 },
+      { hp: 350, range: 180, cooldown: 0.14, damage: 120, holdTime: 0, ammoPerShot: 5 },
     ],
     cannon: [
-      { hp:  90, range: 160, cooldown: 0.8,  damage:  20, holdTime: 0.05, ammoPerShot:  1 },
-      { hp: 125, range: 175, cooldown: 0.7,  damage:  35, holdTime: 0.05, ammoPerShot:  2 },
-      { hp: 175, range: 195, cooldown: 0.55, damage:  60, holdTime: 0.05, ammoPerShot:  5 },
-      { hp: 260, range: 220, cooldown: 0.42, damage: 100, holdTime: 0.05, ammoPerShot: 10 },
-      { hp: 400, range: 250, cooldown: 0.3,  damage: 170, holdTime: 0.05, ammoPerShot: 20 },
+      { hp:  90, range: 160, cooldown: 0.8,  damage:  20, holdTime: 0, ammoPerShot:  1 },
+      { hp: 125, range: 175, cooldown: 0.7,  damage:  35, holdTime: 0, ammoPerShot:  2 },
+      { hp: 175, range: 195, cooldown: 0.55, damage:  60, holdTime: 0, ammoPerShot:  5 },
+      { hp: 260, range: 220, cooldown: 0.42, damage: 100, holdTime: 0, ammoPerShot: 10 },
+      { hp: 400, range: 250, cooldown: 0.3,  damage: 170, holdTime: 0, ammoPerShot: 20 },
     ],
     distributor: [
       { hp:  50, maxFanout: 2, holdTime: 1.5 },

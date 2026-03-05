@@ -137,6 +137,7 @@ export interface AttackTowerMetrics {
 export interface EdgeMetrics {
   sent: number;
   lost: number;
+  arrived: number;
 }
 
 /** 分配器/増幅器のメトリクス */
@@ -202,9 +203,9 @@ export interface MetricsStore {
   edge: Map<EdgeId, EdgeMetrics>;
   queueNode: Map<NodeId, QueueNodeMetrics>;
   generator: Map<NodeId, GeneratorMetrics>;
-  waveSkips: Array<{ waveIndex: number; remainingSec: number }>;
-  totalCountdownTime: number;
   elapsedTime: number;
+  /** 防御力ゲージ（回復不可、拠点攻撃ごとに減少） */
+  defenseHp: number;
 }
 
 // ── View Interfaces（ISP準拠・サービス別部分射影） ──
@@ -237,6 +238,7 @@ export interface WaveView {
   baseHp: number;
   waveIndex: number;
   wavePhase: WavePhase;
+  readonly metrics: MetricsStore;
 }
 
 export interface EconomyView {

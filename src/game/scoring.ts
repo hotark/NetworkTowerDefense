@@ -1,8 +1,9 @@
-// Game Layer: 3-axis scoring, cumulative rate metrics, entity scorecards
+// Game Layer: 2-axis scoring (Availability + Defense), rolling metrics, entity scorecards
 
 import type { GameConfig } from '@core/config';
 import { getTowerLevelStats } from '@core/config';
 import type { GameState } from '@core/state';
+import { getNodeRollingMetrics, getEdgeRollingMetrics } from '@core/metrics';
 
 // ── 定数 ──
 
@@ -12,10 +13,9 @@ const METRICS_UPDATE_INTERVAL = 2.5; // 表示更新間隔（秒）
 
 export interface AxisScore { value: number; }
 
-export interface ThreeAxisScores {
-  buildSpeed: AxisScore;
+export interface TwoAxisScores {
   availability: AxisScore;
-  reliability: AxisScore;
+  defense: AxisScore;
   overall: number;
   rank: string;
 }
@@ -24,22 +24,22 @@ export interface EntityScorecard {
   entityId: string;
   entityType: string;
   label: string;
-  throughput: string;
-  rateIn: string;
-  rateOut: string;
-  lossRate: string;
+  theoretical: string;
+  supplyRate: string;
+  consumptionRate: string;
+  utilization: number;
   isBottleneck: boolean;
 }
 
 export interface ScoreResult {
-  axes: ThreeAxisScores;
+  axes: TwoAxisScores;
   entityScorecards: EntityScorecard[];
 }
 
-// ── 3軸スコア算出 ──
+// ── 2軸スコア算出 ──
 
 function toAxis(pct: number): AxisScore {
-  return { value: Math.max(0, pct) };
+  return { value: Math.max(0, Math.min(100, pct)) };
 }
 
 function computeRank(overall: number): string {
@@ -51,13 +51,7 @@ function computeRank(overall: number): string {
   return 'D';
 }
 
-export function calculateScores(state: GameState, _config: GameConfig): ThreeAxisScores {
-  // 構築力: Σ(waveSkips.remainingSec) / totalCountdownTime × 100
-  const totalSkip = state.metrics.waveSkips.reduce((s, w) => s + w.remainingSec, 0);
-  const buildPct = state.metrics.totalCountdownTime > 0
-    ? (totalSkip / state.metrics.totalCountdownTime) * 100
-    : 0;
-
+export function calculateScores(state: GameState, config: GameConfig): TwoAxisScores {
   // 可用性: (1 - 加重平均弾切れ率) × 100
   let totalDemand = 0;
   let totalStarvation = 0;
@@ -68,31 +62,15 @@ export function calculateScores(state: GameState, _config: GameConfig): ThreeAxi
   const starvationRate = totalDemand > 0 ? totalStarvation / totalDemand : 0;
   const availPct = (1 - starvationRate) * 100;
 
-  // 信頼性: (1 - 全体ロス率) × 100
-  let totalSent = 0;
-  let totalLost = 0;
-  for (const m of state.metrics.edge.values()) {
-    totalSent += m.sent;
-    totalLost += m.lost;
-  }
-  for (const m of state.metrics.queueNode.values()) {
-    totalSent += m.received + m.dropped;
-    totalLost += m.dropped;
-  }
-  for (const m of state.metrics.generator.values()) {
-    totalSent += m.generated + m.blocked;
-    totalLost += m.blocked;
-  }
-  const lossRate = totalSent > 0 ? totalLost / totalSent : 0;
-  const reliPct = (1 - lossRate) * 100;
+  // 防御力: (defenseHp / MAX_DEFENSE_HP) × 100
+  const defensePct = (state.metrics.defenseHp / config.MAX_DEFENSE_HP) * 100;
 
-  const buildSpeed = toAxis(buildPct);
   const availability = toAxis(availPct);
-  const reliability = toAxis(reliPct);
-  const overall = buildSpeed.value * 0.2 + availability.value * 0.5 + reliability.value * 0.3;
+  const defense = toAxis(defensePct);
+  const overall = availability.value * 0.5 + defense.value * 0.5;
   const rank = computeRank(overall);
 
-  return { buildSpeed, availability, reliability, overall, rank };
+  return { availability, defense, overall, rank };
 }
 
 // ── メトリクス経過時間更新 ──
@@ -103,7 +81,6 @@ export function updateMetricsElapsed(state: GameState, dt: number): void {
 
 // ── 表示更新間隔チェック ──
 
-/** 前回更新からの経過を返す。閾値を超えたらtrueを返しリセット */
 let lastDisplayUpdate = 0;
 
 export function shouldUpdateDisplay(simTime: number): boolean {
@@ -121,41 +98,37 @@ export function resetDisplayTimer(): void {
 // ── 勝利画面用スコアカード ──
 
 function fmt(v: number): string {
-  return v < 10 ? v.toFixed(1) : Math.round(v).toString();
-}
-
-/** 累積レート: count / elapsedTime */
-function cumulativeRate(count: number, elapsed: number): number {
-  return elapsed > 0 ? count / elapsed : 0;
+  return v < 10 ? v.toFixed(2) : v.toFixed(1);
 }
 
 export function calculateFinalScore(state: GameState, config: GameConfig): ScoreResult {
   const axes = calculateScores(state, config);
   const entityScorecards: EntityScorecard[] = [];
-  const t = state.metrics.elapsedTime;
+  const rm = state.rollingMetrics;
 
   // 攻撃タワー
-  for (const [id, m] of state.metrics.attackTower) {
+  for (const [id] of state.metrics.attackTower) {
     const node = state.nodes.get(id);
     if (!node) continue;
     const stats = getTowerLevelStats(config, node.type, node.level);
     const cooldown = stats.cooldown ?? 1;
-    const throughput = 1 / cooldown;
-    const starvRate = m.demandTime > 0 ? m.starvationTime / m.demandTime : 0;
+    const theoretical = 1 / cooldown;
+    const nrm = getNodeRollingMetrics(rm, id);
+    const util = nrm.idle.utilization();
     entityScorecards.push({
       entityId: id,
       entityType: node.type,
       label: `${node.type} Lv${node.level}`,
-      throughput: `${fmt(throughput)} 弾/秒`,
-      rateIn: `${fmt(cumulativeRate(m.receivedAmmo, t))} 弾/秒`,
-      rateOut: `${fmt(cumulativeRate(m.consumedAmmo, t))} 弾/秒`,
-      lossRate: `${Math.round(starvRate * 100)}%`,
-      isBottleneck: starvRate > 0.3,
+      theoretical: `${fmt(theoretical)} pkt/s`,
+      supplyRate: `${fmt(nrm.supply.rate())} pkt/s`,
+      consumptionRate: `${fmt(nrm.consumption.rate())} pkt/s`,
+      utilization: util,
+      isBottleneck: util < 0.7,
     });
   }
 
   // エッジ
-  for (const [id, m] of state.metrics.edge) {
+  for (const [id] of state.metrics.edge) {
     const edge = state.edges.get(id);
     if (!edge) continue;
     const fromN = state.nodes.get(edge.from);
@@ -163,64 +136,65 @@ export function calculateFinalScore(state: GameState, config: GameConfig): Score
     if (!fromN || !toN) continue;
     const edgeLvl = config.edgeLevels[Math.min(edge.level, config.MAX_LEVEL) - 1];
     const len = Math.hypot(fromN.x - toN.x, fromN.y - toN.y);
-    const throughput = len > 0 ? (edgeLvl.capacity * config.PACKET_SPEED * edgeLvl.speedMultiplier) / len : 0;
-    const lr = m.sent > 0 ? m.lost / m.sent : 0;
+    const theoretical = len > 0 ? (edgeLvl.capacity * config.PACKET_SPEED * edgeLvl.speedMultiplier) / len : 0;
+    const erm = getEdgeRollingMetrics(rm, id);
+    const util = erm.idle.utilization();
     entityScorecards.push({
       entityId: id,
       entityType: 'edge',
       label: `Edge Lv${edge.level}`,
-      throughput: `${fmt(throughput)} パケット/秒`,
-      rateIn: `${fmt(cumulativeRate(m.sent, t))} パケット/秒`,
-      rateOut: `${fmt(cumulativeRate(m.sent - m.lost, t))} パケット/秒`,
-      lossRate: `${Math.round(lr * 100)}%`,
-      isBottleneck: lr > 0.1,
+      theoretical: `${fmt(theoretical)} pkt/s`,
+      supplyRate: `${fmt(erm.supply.rate())} pkt/s`,
+      consumptionRate: `${fmt(erm.consumption.rate())} pkt/s`,
+      utilization: util,
+      isBottleneck: util < 0.7,
     });
   }
 
   // キューノード（Dist/Rep）
-  for (const [id, m] of state.metrics.queueNode) {
+  for (const [id] of state.metrics.queueNode) {
     const node = state.nodes.get(id);
     if (!node) continue;
     const stats = getTowerLevelStats(config, node.type, node.level);
     const holdTime = stats.holdTime || 1;
-    let throughput: number;
+    let theoretical: number;
     if (node.type === 'distributor') {
-      throughput = (stats.maxFanout ?? 2) / holdTime;
+      theoretical = (stats.maxFanout ?? 2) / holdTime;
     } else {
-      throughput = (1 + (stats.chargeBoost ?? 0)) / holdTime;
+      theoretical = (1 + (stats.chargeBoost ?? 0)) / holdTime;
     }
-    const total = m.received + m.dropped;
-    const lr = total > 0 ? m.dropped / total : 0;
+    const nrm = getNodeRollingMetrics(rm, id);
+    const util = nrm.idle.utilization();
     entityScorecards.push({
       entityId: id,
       entityType: node.type,
       label: `${node.type} Lv${node.level}`,
-      throughput: `${fmt(throughput)} パケット/秒`,
-      rateIn: `${fmt(cumulativeRate(m.received, t))} パケット/秒`,
-      rateOut: `${fmt(cumulativeRate(m.forwarded, t))} パケット/秒`,
-      lossRate: `${Math.round(lr * 100)}%`,
-      isBottleneck: lr > 0.1,
+      theoretical: `${fmt(theoretical)} pkt/s`,
+      supplyRate: `${fmt(nrm.supply.rate())} pkt/s`,
+      consumptionRate: `${fmt(nrm.consumption.rate())} pkt/s`,
+      utilization: util,
+      isBottleneck: util < 0.7,
     });
   }
 
   // 生成器
-  for (const [id, m] of state.metrics.generator) {
+  for (const [id] of state.metrics.generator) {
     const node = state.nodes.get(id);
     if (!node) continue;
     const stats = getTowerLevelStats(config, 'generator', node.level);
     const interval = stats.interval ?? 2.0;
-    const throughput = 1 / interval;
-    const total = m.generated + m.blocked;
-    const lr = total > 0 ? m.blocked / total : 0;
+    const theoretical = 1 / interval;
+    const nrm = getNodeRollingMetrics(rm, id);
+    const util = nrm.idle.utilization();
     entityScorecards.push({
       entityId: id,
       entityType: 'generator',
       label: `generator Lv${node.level}`,
-      throughput: `${fmt(throughput)} パケット/秒`,
-      rateIn: '-',
-      rateOut: `${fmt(cumulativeRate(m.generated, t))} パケット/秒`,
-      lossRate: `${Math.round(lr * 100)}%`,
-      isBottleneck: lr > 0.3,
+      theoretical: `${fmt(theoretical)} pkt/s`,
+      supplyRate: '-',
+      consumptionRate: `${fmt(nrm.consumption.rate())} pkt/s`,
+      utilization: util,
+      isBottleneck: util < 0.7,
     });
   }
 

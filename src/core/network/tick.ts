@@ -79,12 +79,13 @@ export function updatePackets(view: NetworkView, config: GameConfig, dt: number)
     p.progress += (config.PACKET_SPEED * edgeLvl.speedMultiplier / len) * dt;
 
     if (p.progress >= 1) {
+      const em = getEdgeMetrics(view, edge.id);
+      em.arrived += p.charge;
       const destNode = view.nodes.get(edge.to);
       if (destNode && destNode.type !== 'generator') {
         const holdTime = getTowerLevelStats(config, destNode.type, destNode.level).holdTime;
         if (destNode.type === 'distributor' || destNode.type === 'repeater') {
           const qm = getQueueNodeMetrics(view, destNode.id);
-          const em = getEdgeMetrics(view, edge.id);
           for (let c = 0; c < p.charge; c++) {
             if (destNode.held.length >= config.DIST_REP_MAX_QUEUE) {
               qm.dropped++;

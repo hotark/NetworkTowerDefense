@@ -443,25 +443,15 @@ body {
       <span class="label">ウェーブ</span>
       <span class="val" id="st-wave">0</span>
     </div>
-    <div class="top-stat">
-      <div class="icon" style="background:#223">E</div>
-      <span class="label">敵数</span>
-      <span class="val" id="st-enemies">0</span>
-    </div>
-    <div class="top-stat">
-      <div class="icon" style="background:#1a3322">B</div>
-      <span class="label">構築</span>
-      <span class="val" id="st-build" style="color:#44ff88">0%</span>
-    </div>
-    <div class="top-stat">
+<div class="top-stat">
       <div class="icon" style="background:#1a2a33">A</div>
       <span class="label">可用</span>
       <span class="val" id="st-avail" style="color:#44ff88">100%</span>
     </div>
     <div class="top-stat">
-      <div class="icon" style="background:#2a1a33">R</div>
-      <span class="label">信頼</span>
-      <span class="val" id="st-reli" style="color:#44ff88">100%</span>
+      <div class="icon" style="background:#1a3322">D</div>
+      <span class="label">防御</span>
+      <span class="val" id="st-defense" style="color:#44ff88">100%</span>
     </div>
     <button id="btn-base-heal" style="padding:3px 10px;font-size:12px;background:#1a2a2a;color:#44ccaa;border:1px solid #2a4a4a;border-radius:4px;cursor:pointer;display:none;font-family:inherit">拠点回復</button>
     <button id="btn-wave">&#9654; 出撃</button>
@@ -533,11 +523,11 @@ body {
           <div class="stat" id="ti-row-ammo-cost" style="display:none"><span>消費弾薬</span><span class="stat-val" id="ti-ammo-cost">-</span></div>
           <div class="stat" id="ti-row-stock" style="display:none"><span>ストック</span><span class="stat-val" id="ti-stock">-</span></div>
           <div class="stat" id="ti-row-hold" style="display:none"><span>保持</span><span class="stat-val" id="ti-hold">-</span></div>
-          <div class="stat" id="ti-row-throughput" style="display:none"><span>スループット</span><span class="stat-val" id="ti-throughput">-</span></div>
+          <div class="stat" id="ti-row-throughput" style="display:none"><span>理論消費量</span><span class="stat-val" id="ti-throughput">-</span></div>
           <div class="stat" id="ti-row-queue" style="display:none"><span>キュー</span><span class="stat-val" id="ti-queue">-</span></div>
-          <div class="stat" id="ti-row-in" style="display:none"><span>IN</span><span class="stat-val" id="ti-in" style="color:#44bbff">-</span></div>
-          <div class="stat" id="ti-row-out" style="display:none"><span>OUT</span><span class="stat-val" id="ti-out" style="color:#ffaa33">-</span></div>
-          <div class="stat" id="ti-row-loss" style="display:none"><span>ロス率</span><span class="stat-val" id="ti-loss">-</span></div>
+          <div class="stat" id="ti-row-in" style="display:none"><span>供給量</span><span class="stat-val" id="ti-in" style="color:#44bbff">-</span></div>
+          <div class="stat" id="ti-row-out" style="display:none"><span>消費量</span><span class="stat-val" id="ti-out" style="color:#ffaa33">-</span></div>
+          <div class="stat" id="ti-row-util" style="display:none"><span>稼働率</span><span class="stat-val" id="ti-util">-</span></div>
           <div style="margin-top:8px">
             <button id="btn-upgrade" class="tool-btn">強化 <span class="cost">-</span></button>
             <button id="btn-toggle-active" class="tool-btn" style="border-color:#664400">停止</button>
@@ -554,10 +544,10 @@ body {
           <div class="stat"><span>HP</span><span class="stat-val" id="ei-hp">-</span></div>
           <div class="stat"><span>容量</span><span class="stat-val" id="ei-capacity">0/3</span></div>
           <div class="stat"><span>速度倍率</span><span class="stat-val" id="ei-speed">×1.6</span></div>
-          <div class="stat" id="ei-row-throughput"><span>スループット</span><span class="stat-val" id="ei-throughput">-</span></div>
-          <div class="stat" id="ei-row-in"><span>IN</span><span class="stat-val" id="ei-in" style="color:#44bbff">-</span></div>
-          <div class="stat" id="ei-row-out"><span>OUT</span><span class="stat-val" id="ei-out" style="color:#ffaa33">-</span></div>
-          <div class="stat" id="ei-row-loss"><span>ロス率</span><span class="stat-val" id="ei-loss">-</span></div>
+          <div class="stat" id="ei-row-throughput"><span>理論消費量</span><span class="stat-val" id="ei-throughput">-</span></div>
+          <div class="stat" id="ei-row-in"><span>供給量</span><span class="stat-val" id="ei-in" style="color:#44bbff">-</span></div>
+          <div class="stat" id="ei-row-out"><span>消費量</span><span class="stat-val" id="ei-out" style="color:#ffaa33">-</span></div>
+          <div class="stat" id="ei-row-util"><span>稼働率</span><span class="stat-val" id="ei-util">-</span></div>
           <div style="margin-top:8px">
             <button id="btn-edge-upgrade" class="tool-btn" style="border-color:#00aaaa;color:#44ccee">強化 <span class="cost">$15</span></button>
             <button id="btn-edge-reverse" class="tool-btn" style="border-color:#4488ff;color:#66aaff">反転</button>

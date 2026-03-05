@@ -38,9 +38,8 @@ describe('View Interfaces', () => {
         edge: new Map(),
         queueNode: new Map(),
         generator: new Map(),
-        waveSkips: [],
-        totalCountdownTime: 0,
         elapsedTime: 0,
+        defenseHp: 1000,
       },
     };
     expect(mock.nodes).toBeDefined();

@@ -102,6 +102,7 @@ export function updateEnemies(view: WaveView, config: GameConfig, stage: StageDa
       if (e.attackTimer <= 0) {
         e.attackTimer = config.ENEMY_ATTACK_INTERVAL;
         view.baseHp -= 1;
+        view.metrics.defenseHp -= 1;
       }
       continue;
     }
@@ -118,6 +119,7 @@ export function updateEnemies(view: WaveView, config: GameConfig, stage: StageDa
       e.atBase = true;
       e.attackTimer = config.ENEMY_ATTACK_INTERVAL;
       view.baseHp -= 1;
+      view.metrics.defenseHp -= 1;
       continue;
     }
 

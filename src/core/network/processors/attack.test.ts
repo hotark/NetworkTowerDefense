@@ -20,7 +20,7 @@ function createNode(overrides?: Partial<TowerNode>): TowerNode {
 function createView(): NetworkView {
   return {
     nodes: new Map(), edges: new Map(), packets: new Map(),
-    metrics: { attackTower: new Map(), edge: new Map(), queueNode: new Map(), generator: new Map(), waveSkips: [], totalCountdownTime: 0, elapsedTime: 0 },
+    metrics: { attackTower: new Map(), edge: new Map(), queueNode: new Map(), generator: new Map(), elapsedTime: 0, defenseHp: 1000 },
   };
 }
 

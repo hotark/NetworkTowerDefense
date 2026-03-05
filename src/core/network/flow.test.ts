@@ -39,7 +39,7 @@ function createView(): NetworkView {
     nodes: new Map([[gen.id, gen], [rep.id, rep], [dist.id, dist]]),
     edges: new Map([[e1.id, e1], [e2.id, e2]]),
     packets: new Map(),
-    metrics: { attackTower: new Map(), edge: new Map(), queueNode: new Map(), generator: new Map(), waveSkips: [], totalCountdownTime: 0, elapsedTime: 0 },
+    metrics: { attackTower: new Map(), edge: new Map(), queueNode: new Map(), generator: new Map(), elapsedTime: 0, defenseHp: 1000 },
   };
 }
 

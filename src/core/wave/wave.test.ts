@@ -56,6 +56,7 @@ function createWaveView(overrides?: Partial<WaveView>): WaveView {
     baseHp: 20,
     waveIndex: 0,
     wavePhase: 'prep',
+    metrics: { attackTower: new Map(), edge: new Map(), queueNode: new Map(), generator: new Map(), elapsedTime: 0, defenseHp: 1000 },
     ...overrides,
   };
 }

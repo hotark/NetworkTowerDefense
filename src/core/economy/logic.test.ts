@@ -11,7 +11,7 @@ function createView(overrides?: Partial<EconomyView>): EconomyView {
   return {
     nodes: new Map(), edges: new Map(), packets: new Map(),
     resources: 600,
-    metrics: { attackTower: new Map(), edge: new Map(), queueNode: new Map(), generator: new Map(), waveSkips: [], totalCountdownTime: 0, elapsedTime: 0 },
+    metrics: { attackTower: new Map(), edge: new Map(), queueNode: new Map(), generator: new Map(), elapsedTime: 0, defenseHp: 1000 },
     ...overrides,
   };
 }

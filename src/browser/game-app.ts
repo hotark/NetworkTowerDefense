@@ -31,7 +31,7 @@ import {
   calculateScores,
   shouldUpdateDisplay, resetDisplayTimer,
 } from '@game/scoring';
-import type { ThreeAxisScores } from '@game/scoring';
+import type { TwoAxisScores } from '@game/scoring';
 
 // ── GameApp ──
 
@@ -70,7 +70,7 @@ export class GameApp {
   private baseRepairing = false;
 
   // スコア
-  private latestScores: ThreeAxisScores | null = null;
+  private latestScores: TwoAxisScores | null = null;
 
   // シミュレーションフロー
   private gameFlow!: GameFlow;
@@ -246,12 +246,6 @@ export class GameApp {
     if (this.state.gameResult !== 'playing') return;
     if (this.waveRuntime.nextWaveDelay > 0) return;
     if (this.state.waveIndex >= this.config.waveDefs.length) return;
-
-    // スキップ記録（手動開始 → 残り秒数を記録）
-    this.state.metrics.waveSkips.push({
-      waveIndex: this.state.waveIndex + 1,
-      remainingSec: this.waveRuntime.waveCountdown,
-    });
 
     const bonus = Math.floor(this.waveRuntime.waveCountdown * this.config.SKIP_BONUS_PER_SEC);
     this.state.resources += bonus;

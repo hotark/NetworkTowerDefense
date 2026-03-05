@@ -21,6 +21,8 @@ import type {
   WavePhase,
 } from './types';
 import type { GameConfig } from './config';
+import type { RollingMetricsStore } from '@core/metrics';
+import { createRollingMetricsStore } from '@core/metrics';
 
 // MetricsStore は types.ts で定義 → re-export
 export type { MetricsStore } from './types';
@@ -44,6 +46,7 @@ export interface GameState {
   simSpeed: number;
   gameResult: 'playing' | 'victory' | 'defeat';
   metrics: MetricsStore;
+  rollingMetrics: RollingMetricsStore;
 }
 
 // ── ID生成 ──
@@ -98,10 +101,10 @@ export function createGameState(config: GameConfig): GameState {
       edge: new Map(),
       queueNode: new Map(),
       generator: new Map(),
-      waveSkips: [],
-      totalCountdownTime: config.WAVE_COUNTDOWN * config.waveDefs.length,
       elapsedTime: 0,
+      defenseHp: config.MAX_DEFENSE_HP,
     },
+    rollingMetrics: createRollingMetricsStore(),
   };
 }
 
@@ -161,7 +164,7 @@ export function getAttackTowerMetrics(state: { metrics: MetricsStore }, id: Node
 export function getEdgeMetrics(state: { metrics: MetricsStore }, id: EdgeId): EdgeMetrics {
   let m = state.metrics.edge.get(id);
   if (!m) {
-    m = { sent: 0, lost: 0 };
+    m = { sent: 0, lost: 0, arrived: 0 };
     state.metrics.edge.set(id, m);
   }
   return m;

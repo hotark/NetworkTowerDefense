@@ -34,7 +34,7 @@ function makeEdge(id: string, from: string, to: string, overrides?: Partial<Edge
 function makeMetrics(): MetricsStore {
   return {
     attackTower: new Map(), edge: new Map(), queueNode: new Map(),
-    generator: new Map(), waveSkips: [], totalCountdownTime: 0, elapsedTime: 0,
+    generator: new Map(), elapsedTime: 0, defenseHp: 1000,
   };
 }
 

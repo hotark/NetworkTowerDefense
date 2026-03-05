@@ -9,7 +9,13 @@ import {
   getUpgradeCost, getEdgeUpgradeCost, getUpgradeDuration,
 } from '@core/config';
 import type { GameState } from '@core/state';
-import { chargeOnEdge } from '@game/network';
+import {
+  getAttackTowerMetrics, getEdgeMetrics,
+  getQueueNodeMetrics, getGeneratorMetrics,
+} from '@core/state';
+import { chargeOnEdge } from '@core/network/logic';
+import { calculateFinalScore } from '@game/scoring';
+import type { ThreeAxisScores } from '@game/scoring';
 
 // ── 公開型 ──
 
@@ -26,6 +32,9 @@ export interface HUDSignals {
   waveCountdown: Signal<number>;
   nextWaveDelay: Signal<number>;
   skipBonus: Signal<number>;
+  buildScore: Signal<number>;
+  availScore: Signal<number>;
+  reliScore: Signal<number>;
 }
 
 export type HUDCallback =
@@ -86,6 +95,9 @@ export function createHUD(
     waveCountdown: signal(config.WAVE_COUNTDOWN),
     nextWaveDelay: signal(0),
     skipBonus: signal(0),
+    buildScore: signal(0),
+    availScore: signal(100),
+    reliScore: signal(100),
   };
 
   const $ = (id: string) => document.getElementById(id);
@@ -203,6 +215,21 @@ export function createHUD(
     }
   });
 
+  // 3軸スコア表示
+  const scoreColor = (v: number) => v >= 80 ? '#44ff88' : v >= 50 ? '#ffaa33' : '#ff4466';
+  effect(() => {
+    const el = $('st-build');
+    if (el) { el.textContent = `${Math.round(signals.buildScore.value)}%`; el.style.color = scoreColor(signals.buildScore.value); }
+  });
+  effect(() => {
+    const el = $('st-avail');
+    if (el) { el.textContent = `${Math.round(signals.availScore.value)}%`; el.style.color = scoreColor(signals.availScore.value); }
+  });
+  effect(() => {
+    const el = $('st-reli');
+    if (el) { el.textContent = `${Math.round(signals.reliScore.value)}%`; el.style.color = scoreColor(signals.reliScore.value); }
+  });
+
   // ゲームオーバー・勝利オーバーレイ
   effect(() => {
     const result = signals.gameResult.value;
@@ -223,6 +250,7 @@ export function syncHUD(
   waveCountdown: number,
   nextWaveDelay: number,
   skipBonus: number,
+  scores?: ThreeAxisScores | null,
 ): void {
   signals.baseHp.value = state.baseHp;
   signals.maxBaseHp.value = state.maxBaseHp;
@@ -233,6 +261,11 @@ export function syncHUD(
   signals.waveCountdown.value = waveCountdown;
   signals.nextWaveDelay.value = nextWaveDelay;
   signals.skipBonus.value = skipBonus;
+  if (scores) {
+    signals.buildScore.value = scores.buildSpeed.value;
+    signals.availScore.value = scores.availability.value;
+    signals.reliScore.value = scores.reliability.value;
+  }
 }
 
 // ── 選択パネル更新 ──
@@ -273,7 +306,7 @@ export function updateTowerPanel(
   const stats = getTowerLevelStats(config, node.type, node.level);
 
   // 全行一旦非表示
-  for (const row of ['ti-row-range', 'ti-row-dmg', 'ti-row-cd', 'ti-row-interval', 'ti-row-hold', 'ti-row-rate', 'ti-row-stock', 'ti-row-ammo-cost']) {
+  for (const row of ['ti-row-range', 'ti-row-dmg', 'ti-row-cd', 'ti-row-interval', 'ti-row-hold', 'ti-row-rate', 'ti-row-stock', 'ti-row-ammo-cost', 'ti-row-throughput', 'ti-row-queue', 'ti-row-in', 'ti-row-out', 'ti-row-loss']) {
     setDisplay(row, false);
   }
 
@@ -305,6 +338,82 @@ export function updateTowerPanel(
     setDisplay('ti-row-hold', true);
     setText('ti-rate', `charge +${stats.chargeBoost ?? 0}`);
     setText('ti-hold', `${stats.holdTime}s`);
+  }
+
+  // メトリクス行
+  const fmtRate = (v: number) => v < 10 ? v.toFixed(1) : Math.round(v).toString();
+  setDisplay('ti-row-throughput', true);
+
+  const t = state.metrics.elapsedTime;
+  const cumRate = (count: number) => t > 0 ? count / t : 0;
+
+  if (node.type === 'sniper' || node.type === 'rapid' || node.type === 'cannon') {
+    const cooldown = stats.cooldown ?? 1;
+    setText('ti-throughput', `${fmtRate(1 / cooldown)} 弾/秒`);
+    const atm = getAttackTowerMetrics(state, nodeId);
+    setDisplay('ti-row-in', true);
+    setDisplay('ti-row-out', true);
+    setDisplay('ti-row-loss', true);
+    setText('ti-in', `${fmtRate(cumRate(atm.receivedAmmo))} 弾/秒`);
+    setText('ti-out', `${fmtRate(cumRate(atm.consumedAmmo))} 弾/秒`);
+    const starvRate = atm.demandTime > 0 ? atm.starvationTime / atm.demandTime : 0;
+    setText('ti-loss', `${Math.round(starvRate * 100)}%`);
+    const lossEl = $('ti-loss');
+    if (lossEl) lossEl.style.color = starvRate > 0.3 ? '#ff4466' : starvRate > 0.1 ? '#ffaa33' : '#44ff88';
+  } else if (node.type === 'generator') {
+    const interval = stats.interval ?? 2.0;
+    setText('ti-throughput', `${fmtRate(1 / interval)} パケット/秒`);
+    const gm = getGeneratorMetrics(state, nodeId);
+    setDisplay('ti-row-out', true);
+    setDisplay('ti-row-loss', true);
+    setText('ti-out', `${fmtRate(cumRate(gm.generated))} パケット/秒`);
+    const total = gm.generated + gm.blocked;
+    const lr = total > 0 ? gm.blocked / total : 0;
+    setText('ti-loss', `${Math.round(lr * 100)}%`);
+    const lossEl = $('ti-loss');
+    if (lossEl) lossEl.style.color = lr > 0.3 ? '#ff4466' : lr > 0.1 ? '#ffaa33' : '#44ff88';
+  } else if (node.type === 'distributor') {
+    const holdTime = stats.holdTime || 1;
+    const tp = (stats.maxFanout ?? 2) / holdTime;
+    setText('ti-throughput', `${fmtRate(tp)} パケット/秒`);
+    const qm = getQueueNodeMetrics(state, nodeId);
+    setDisplay('ti-row-queue', true);
+    setDisplay('ti-row-in', true);
+    setDisplay('ti-row-out', true);
+    setDisplay('ti-row-loss', true);
+    const qLen = node.held.length;
+    const qMax = config.DIST_REP_MAX_QUEUE;
+    setText('ti-queue', `${qLen}/${qMax}`);
+    const queueEl = $('ti-queue');
+    if (queueEl) queueEl.style.color = qLen >= qMax ? '#ff4466' : qLen >= qMax * 0.7 ? '#ffaa33' : '';
+    setText('ti-in', `${fmtRate(cumRate(qm.received))} パケット/秒`);
+    setText('ti-out', `${fmtRate(cumRate(qm.forwarded))} パケット/秒`);
+    const total = qm.received + qm.dropped;
+    const lr = total > 0 ? qm.dropped / total : 0;
+    setText('ti-loss', `${Math.round(lr * 100)}%`);
+    const lossEl = $('ti-loss');
+    if (lossEl) lossEl.style.color = lr > 0.1 ? '#ff4466' : '#44ff88';
+  } else if (node.type === 'repeater') {
+    const holdTime = stats.holdTime || 1;
+    const tp = (1 + (stats.chargeBoost ?? 0)) / holdTime;
+    setText('ti-throughput', `${fmtRate(tp)} パケット/秒`);
+    const qm = getQueueNodeMetrics(state, nodeId);
+    setDisplay('ti-row-queue', true);
+    setDisplay('ti-row-in', true);
+    setDisplay('ti-row-out', true);
+    setDisplay('ti-row-loss', true);
+    const qLen = node.held.length;
+    const qMax = config.DIST_REP_MAX_QUEUE;
+    setText('ti-queue', `${qLen}/${qMax}`);
+    const queueEl = $('ti-queue');
+    if (queueEl) queueEl.style.color = qLen >= qMax ? '#ff4466' : qLen >= qMax * 0.7 ? '#ffaa33' : '';
+    setText('ti-in', `${fmtRate(cumRate(qm.received))} パケット/秒`);
+    setText('ti-out', `${fmtRate(cumRate(qm.forwarded))} パケット/秒`);
+    const total = qm.received + qm.dropped;
+    const lr = total > 0 ? qm.dropped / total : 0;
+    setText('ti-loss', `${Math.round(lr * 100)}%`);
+    const lossEl = $('ti-loss');
+    if (lossEl) lossEl.style.color = lr > 0.1 ? '#ff4466' : '#44ff88';
   }
 
   // アップグレードボタン
@@ -380,6 +489,25 @@ export function updateEdgePanel(
   setText('ei-capacity', `${chargeOnEdge(state, edge.id)}/${eLvStats.capacity}`);
   setText('ei-speed', `×${eLvStats.speedMultiplier}`);
 
+  // メトリクス行
+  const fmtR = (v: number) => v < 10 ? v.toFixed(1) : Math.round(v).toString();
+  const fromN = state.nodes.get(edge.from);
+  const toN = state.nodes.get(edge.to);
+  if (fromN && toN) {
+    const len = Math.hypot(fromN.x - toN.x, fromN.y - toN.y);
+    const tp = len > 0 ? (eLvStats.capacity * config.PACKET_SPEED * eLvStats.speedMultiplier) / len : 0;
+    setText('ei-throughput', `${fmtR(tp)} パケット/秒`);
+  }
+  const em = getEdgeMetrics(state, edge.id);
+  const et = state.metrics.elapsedTime;
+  const eCumRate = (count: number) => et > 0 ? count / et : 0;
+  setText('ei-in', `${fmtR(eCumRate(em.sent))} パケット/秒`);
+  setText('ei-out', `${fmtR(eCumRate(em.sent - em.lost))} パケット/秒`);
+  const eLr = em.sent > 0 ? em.lost / em.sent : 0;
+  setText('ei-loss', `${Math.round(eLr * 100)}%`);
+  const eiLossEl = document.getElementById('ei-loss');
+  if (eiLossEl) eiLossEl.style.color = eLr > 0.1 ? '#ff4466' : eLr > 0 ? '#ffaa33' : '#44ff88';
+
   // エッジアップグレードボタン
   const edgeUpgBtn = $('btn-edge-upgrade') as HTMLButtonElement | null;
   if (edgeUpgBtn) {
@@ -434,6 +562,43 @@ export function deselectUI(): void {
   if (towerPanel) towerPanel.style.display = 'none';
   if (edgePanel) edgePanel.style.display = 'none';
   if (infoEmpty) infoEmpty.style.display = '';
+}
+
+export function showVictoryScorecard(state: GameState, config: GameConfig): void {
+  const result = calculateFinalScore(state, config);
+  const axes = result.axes;
+
+  // 3軸スコア
+  const scoresEl = document.getElementById('victory-scores');
+  if (scoresEl) {
+    const color = (v: number) => v >= 80 ? '#44ff88' : v >= 50 ? '#ffaa33' : '#ff4466';
+    scoresEl.innerHTML = [
+      { label: '構築力', val: axes.buildSpeed.value },
+      { label: '可用性', val: axes.availability.value },
+      { label: '信頼性', val: axes.reliability.value },
+    ].map(a => `<div class="victory-axis"><div class="axis-label">${a.label}</div><div class="axis-val" style="color:${color(a.val)}">${Math.round(a.val)}%</div></div>`).join('');
+  }
+
+  // ランク
+  const rankEl = document.getElementById('victory-rank');
+  if (rankEl) {
+    rankEl.textContent = axes.rank;
+    rankEl.title = `総合: ${Math.round(axes.overall)}%`;
+  }
+
+  // エンティティ一覧
+  const cardsEl = document.getElementById('victory-cards');
+  if (cardsEl) {
+    if (result.entityScorecards.length === 0) {
+      cardsEl.innerHTML = '<div style="color:#556;text-align:center;padding:8px">エンティティなし</div>';
+    } else {
+      cardsEl.innerHTML = result.entityScorecards.map(c => {
+        const bn = c.isBottleneck ? ' bottleneck' : '';
+        const inPart = c.rateIn !== '-' ? `IN ${c.rateIn} / ` : '';
+        return `<div class="victory-card${bn}"><span class="vc-label">${c.label}</span><span class="vc-stats">${c.throughput} | ${inPart}OUT ${c.rateOut}</span><span class="vc-loss">${c.lossRate}</span></div>`;
+      }).join('');
+    }
+  }
 }
 
 export function showMainMenu(): void {

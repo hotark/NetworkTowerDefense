@@ -41,20 +41,6 @@ export class Camera {
     };
   }
 
-  /** Canvas 2DコンテキストにカメラのsetTransformを適用 */
-  applyTransform(ctx: CanvasRenderingContext2D): void {
-    ctx.setTransform(
-      this.state.zoom, 0,
-      0, this.state.zoom,
-      this.state.x, this.state.y,
-    );
-  }
-
-  /** Canvas 2Dコンテキストの変換をリセット */
-  resetTransform(ctx: CanvasRenderingContext2D): void {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-  }
-
   /** 指定スクリーン座標を中心にズーム（マウスホイール / ピンチ） */
   zoomAt(screenX: number, screenY: number, delta: number): void {
     const oldZoom = this.state.zoom;

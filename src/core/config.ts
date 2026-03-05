@@ -56,6 +56,7 @@ export interface GameConfig {
   readonly REPAIR_RATE_TOWER: number;
   readonly REPAIR_RATE_EDGE: number;
   readonly BASE_ATTACK: { readonly range: number; readonly cooldown: number; readonly damage: number };
+  readonly DIST_REP_MAX_QUEUE: number;
 
   readonly towerLevels: Readonly<Record<NodeType, ReadonlyArray<TowerLevelStats>>>;
   readonly edgeLevels: ReadonlyArray<EdgeLevelStats>;
@@ -101,6 +102,7 @@ export const GAME_CONFIG: GameConfig = {
   REPAIR_RATE_TOWER: 40,
   REPAIR_RATE_EDGE: 20,
   BASE_ATTACK: { range: 120, cooldown: 2.0, damage: 10 },
+  DIST_REP_MAX_QUEUE: 50,
 
   // ── タワーレベル別ステータステーブル ──
   towerLevels: {

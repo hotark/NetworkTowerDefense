@@ -13,8 +13,17 @@ import type {
   Bullet,
   EnemyBullet,
   Effect,
+  AttackTowerMetrics,
+  EdgeMetrics,
+  QueueNodeMetrics,
+  GeneratorMetrics,
+  MetricsStore,
+  WavePhase,
 } from './types';
 import type { GameConfig } from './config';
+
+// MetricsStore は types.ts で定義 → re-export
+export type { MetricsStore } from './types';
 
 // ── GameState ──
 
@@ -30,10 +39,11 @@ export interface GameState {
   baseHp: number;
   maxBaseHp: number;
   waveIndex: number;
-  wavePhase: 'prep' | 'active' | 'complete';
+  wavePhase: WavePhase;
   simTime: number;
   simSpeed: number;
   gameResult: 'playing' | 'victory' | 'defeat';
+  metrics: MetricsStore;
 }
 
 // ── ID生成 ──
@@ -83,12 +93,21 @@ export function createGameState(config: GameConfig): GameState {
     simTime: 0,
     simSpeed: 1,
     gameResult: 'playing',
+    metrics: {
+      attackTower: new Map(),
+      edge: new Map(),
+      queueNode: new Map(),
+      generator: new Map(),
+      waveSkips: [],
+      totalCountdownTime: config.WAVE_COUNTDOWN * config.waveDefs.length,
+      elapsedTime: 0,
+    },
   };
 }
 
 // ── エッジ検索ヘルパー ──
 
-export function outgoingEdges(state: GameState, nodeId: NodeId): Edge[] {
+export function outgoingEdges(state: { edges: Map<EdgeId, Edge> }, nodeId: NodeId): Edge[] {
   const result: Edge[] = [];
   for (const edge of state.edges.values()) {
     if (edge.from === nodeId && edge.status === 'active') {
@@ -98,7 +117,7 @@ export function outgoingEdges(state: GameState, nodeId: NodeId): Edge[] {
   return result;
 }
 
-export function incomingEdges(state: GameState, nodeId: NodeId): Edge[] {
+export function incomingEdges(state: { edges: Map<EdgeId, Edge> }, nodeId: NodeId): Edge[] {
   const result: Edge[] = [];
   for (const edge of state.edges.values()) {
     if (edge.to === nodeId && edge.status === 'active') {
@@ -108,7 +127,7 @@ export function incomingEdges(state: GameState, nodeId: NodeId): Edge[] {
   return result;
 }
 
-export function edgesBetween(state: GameState, a: NodeId, b: NodeId): Edge[] {
+export function edgesBetween(state: { edges: Map<EdgeId, Edge> }, a: NodeId, b: NodeId): Edge[] {
   const result: Edge[] = [];
   for (const edge of state.edges.values()) {
     if ((edge.from === a && edge.to === b) || (edge.from === b && edge.to === a)) {
@@ -118,7 +137,7 @@ export function edgesBetween(state: GameState, a: NodeId, b: NodeId): Edge[] {
   return result;
 }
 
-export function connectedEdges(state: GameState, nodeId: NodeId): Edge[] {
+export function connectedEdges(state: { edges: Map<EdgeId, Edge> }, nodeId: NodeId): Edge[] {
   const result: Edge[] = [];
   for (const edge of state.edges.values()) {
     if (edge.from === nodeId || edge.to === nodeId) {
@@ -126,4 +145,42 @@ export function connectedEdges(state: GameState, nodeId: NodeId): Edge[] {
     }
   }
   return result;
+}
+
+// ── メトリクス get-or-create ──
+
+export function getAttackTowerMetrics(state: { metrics: MetricsStore }, id: NodeId): AttackTowerMetrics {
+  let m = state.metrics.attackTower.get(id);
+  if (!m) {
+    m = { consumedAmmo: 0, receivedAmmo: 0, demandTime: 0, starvationTime: 0 };
+    state.metrics.attackTower.set(id, m);
+  }
+  return m;
+}
+
+export function getEdgeMetrics(state: { metrics: MetricsStore }, id: EdgeId): EdgeMetrics {
+  let m = state.metrics.edge.get(id);
+  if (!m) {
+    m = { sent: 0, lost: 0 };
+    state.metrics.edge.set(id, m);
+  }
+  return m;
+}
+
+export function getQueueNodeMetrics(state: { metrics: MetricsStore }, id: NodeId): QueueNodeMetrics {
+  let m = state.metrics.queueNode.get(id);
+  if (!m) {
+    m = { received: 0, dropped: 0, forwarded: 0 };
+    state.metrics.queueNode.set(id, m);
+  }
+  return m;
+}
+
+export function getGeneratorMetrics(state: { metrics: MetricsStore }, id: NodeId): GeneratorMetrics {
+  let m = state.metrics.generator.get(id);
+  if (!m) {
+    m = { generated: 0, blocked: 0 };
+    state.metrics.generator.set(id, m);
+  }
+  return m;
 }

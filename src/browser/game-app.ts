@@ -2,32 +2,36 @@
 
 import type { NodeId, EdgeId } from '@core/types';
 import type { GameConfig } from '@core/config';
+import { stage1 } from '@core/stages';
 import { createGameState, resetIdCounter } from '@core/state';
 import type { GameState } from '@core/state';
 import { Camera } from '@core/camera';
-import { InputManager } from '@core/input';
-
-import { tickGenerators, updatePackets, tickHeldPackets } from '@game/network';
-import { updateTowerAttacks, updateBaseAttack, updateBullets, applyBulletHits, updateEnemyBullets, resetBaseCooldown } from '@game/combat';
-import type { BulletHit } from '@game/combat';
-import { createWaveRuntime, startWave, updateWaveSpawning, updateEnemies, checkGameEnd } from '@game/wave';
+import { InputManager } from './input';
+import { resetBaseCooldown } from '@game/combat';
+import { createWaveRuntime, startWave, checkGameEnd } from '@game/wave';
 import type { WaveRuntime } from '@game/wave';
-import { updateBuildTimers, purchase, refund, canAfford } from '@game/economy';
+import { purchase, refund, canAfford } from '@game/economy';
+import { createSimulationFlow } from '@game/domain-ticks';
+import type { GameFlow } from '@game/game-flow';
 import {
   render, loadAllAssets,
-  updateEffects, updateEffectPositions,
-  addImpactEffect, addExplosionParticles,
   hitTestNode, hitTestEmptySlot, hitTestEdge,
-} from '@game/renderer';
-import type { UIState, AssetMap } from '@game/renderer';
+} from './renderer';
+import type { UIState, AssetMap } from './renderer';
 
 import {
   createHUD, syncHUD,
   updateTowerPanel, updateEdgePanel,
   selectNodeUI, selectEdgeUI, deselectUI,
   showMainMenu, hideMainMenu,
+  showVictoryScorecard,
 } from '@browser/hud';
 import type { HUDSignals, HUDCallback } from '@browser/hud';
+import {
+  calculateScores,
+  shouldUpdateDisplay, resetDisplayTimer,
+} from '@game/scoring';
+import type { ThreeAxisScores } from '@game/scoring';
 
 // ── GameApp ──
 
@@ -35,6 +39,7 @@ export class GameApp {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private config: GameConfig;
+  private stage = stage1;
   private camera: Camera;
   private input: InputManager;
   private assets: AssetMap = new Map();
@@ -63,6 +68,12 @@ export class GameApp {
   private repairingNodes = new Set<NodeId>();
   private repairingEdges = new Set<EdgeId>();
   private baseRepairing = false;
+
+  // スコア
+  private latestScores: ThreeAxisScores | null = null;
+
+  // シミュレーションフロー
+  private gameFlow!: GameFlow;
 
   constructor(canvas: HTMLCanvasElement, config: GameConfig) {
     this.canvas = canvas;
@@ -118,12 +129,15 @@ export class GameApp {
     resetBaseCooldown();
     this.state = createGameState(this.config);
     this.waveRuntime = createWaveRuntime(this.config);
+    this.gameFlow = createSimulationFlow(this.stage, this.waveRuntime);
     this.ui.selectedNodeId = null;
     this.ui.selectedEdgeId = null;
     this.ui.dragPreview = null;
     this.repairingNodes.clear();
     this.repairingEdges.clear();
     this.baseRepairing = false;
+    this.latestScores = null;
+    resetDisplayTimer();
   }
 
   // ── リサイズ ──
@@ -233,10 +247,16 @@ export class GameApp {
     if (this.waveRuntime.nextWaveDelay > 0) return;
     if (this.state.waveIndex >= this.config.waveDefs.length) return;
 
+    // スキップ記録（手動開始 → 残り秒数を記録）
+    this.state.metrics.waveSkips.push({
+      waveIndex: this.state.waveIndex + 1,
+      remainingSec: this.waveRuntime.waveCountdown,
+    });
+
     const bonus = Math.floor(this.waveRuntime.waveCountdown * this.config.SKIP_BONUS_PER_SEC);
     this.state.resources += bonus;
     this.waveRuntime.waveCountdown = 0;
-    startWave(this.state, this.config, this.waveRuntime);
+    startWave(this.state, this.config, this.stage, this.waveRuntime);
   }
 
   private handleUpgradeTower(nodeId: NodeId): void {
@@ -470,84 +490,24 @@ export class GameApp {
   private update(dt: number): void {
     if (this.state.gameResult !== 'playing') return;
 
-    // 1. ウェーブスポーン
-    updateWaveSpawning(this.state, this.config, this.waveRuntime, dt);
+    // シミュレーション（GameFlow経由でCoreサービスを順次実行）
+    this.gameFlow.tick(this.state, this.config, dt);
 
-    // 2. 建設・アップグレードタイマー
-    updateBuildTimers(this.state, this.config, dt);
-
-    // 3. パケット生成
-    tickGenerators(this.state, this.config, dt);
-
-    // 4. パケット移動
-    updatePackets(this.state, this.config, dt);
-
-    // 5. 保持キュー処理
-    tickHeldPackets(this.state, this.config, dt);
-
-    // 6. タワー攻撃
-    updateTowerAttacks(this.state, this.config, dt);
-
-    // 7. 拠点攻撃
-    updateBaseAttack(this.state, this.config, dt);
-
-    // 8. 弾移動・命中
-    const hits = updateBullets(this.state, dt);
-    this.processHits(hits);
-
-    // 9. 敵移動
-    updateEnemies(this.state, this.config, dt);
-
-    // 10. 敵弾
-    updateEnemyBullets(this.state, this.config, dt);
-
-    // 11. 修理処理
+    // 修理処理（Browser層固有状態を使用）
     this.processRepairs(dt);
 
-    // 12. 終了判定
-    const result = checkGameEnd(this.state, this.config, this.waveRuntime);
+    // 終了判定（UI副作用あり）
+    const result = checkGameEnd(this.state, this.stage, this.waveRuntime);
     if (result !== 'playing') {
       this.state.gameResult = result;
-    }
-
-    // 13. エフェクト更新
-    updateEffects(this.state, dt);
-    updateEffectPositions(this.state, dt);
-
-    // 14. simTime
-    this.state.simTime += dt;
-  }
-
-  private processHits(hits: BulletHit[]): void {
-    for (const hit of hits) {
-      // 着弾エフェクト
-      if (hit.towerType === 'cannon') {
-        addImpactEffect(this.state, hit.x, hit.y, 'cannon', hit.level);
-        addExplosionParticles(this.state, hit.x, hit.y, '#cc44ff', 6);
-      } else if (hit.towerType === 'sniper') {
-        addImpactEffect(this.state, hit.x, hit.y, 'sniper', hit.level);
-      } else if (hit.towerType === 'rapid') {
-        addImpactEffect(this.state, hit.x, hit.y, 'rapid', hit.level);
-      } else {
-        addImpactEffect(this.state, hit.x, hit.y, 'cannon', 1);
+      if (result === 'victory') {
+        showVictoryScorecard(this.state, this.config);
       }
     }
-    applyBulletHits(this.state, hits);
 
-    // 撃破パーティクル + 残弾の飛行先設定
-    for (const hit of hits) {
-      const enemy = this.state.enemies.get(hit.targetId);
-      if (enemy && enemy.hp <= 0) {
-        const typeDef = this.config.enemyTypes[enemy.type];
-        addExplosionParticles(this.state, enemy.x, enemy.y, typeDef?.stroke ?? '#ff4466', 8);
-        // この敵を狙っている他の弾に最終位置を記録してから削除
-        for (const b of this.state.bullets.values()) {
-          if (b.targetId === hit.targetId && !b.deadPos) {
-            b.deadPos = { x: enemy.x, y: enemy.y };
-          }
-        }
-        this.state.enemies.delete(hit.targetId);
-      }
+    // スコア表示更新
+    if (shouldUpdateDisplay(this.state.simTime)) {
+      this.latestScores = calculateScores(this.state, this.config);
     }
   }
 
@@ -626,6 +586,7 @@ export class GameApp {
         this.waveRuntime.waveCountdown,
         this.waveRuntime.nextWaveDelay,
         skipBonus,
+        this.latestScores,
       );
 
       // 選択パネルリアルタイム更新

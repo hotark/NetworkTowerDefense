@@ -21,5 +21,8 @@ Desktop.ini
 *.swp
 *.swo
 
+# Coverage
+coverage/
+
 # Experimental / prototype
 mockup/

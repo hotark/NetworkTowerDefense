@@ -528,10 +528,18 @@ body {
           <div class="stat" id="ti-row-in" style="display:none"><span>供給量</span><span class="stat-val" id="ti-in" style="color:#44bbff">-</span></div>
           <div class="stat" id="ti-row-out" style="display:none"><span>消費量</span><span class="stat-val" id="ti-out" style="color:#ffaa33">-</span></div>
           <div class="stat" id="ti-row-util" style="display:none"><span>稼働率</span><span class="stat-val" id="ti-util">-</span></div>
-          <div style="margin-top:8px">
+          <div id="tower-buttons" style="margin-top:8px">
             <button id="btn-upgrade" class="tool-btn">強化 <span class="cost">-</span></button>
             <button id="btn-toggle-active" class="tool-btn" style="border-color:#664400">停止</button>
             <button id="btn-destroy" class="tool-btn" style="border-color:#cc3333;color:#ff6666">撤去</button>
+          </div>
+          <div id="tower-confirm" style="display:none;margin-top:8px;background:#111828;border:1px solid #1a2040;border-radius:4px;padding:8px;">
+            <div id="tower-confirm-title" style="font-size:12px;font-weight:bold;color:#eee;margin-bottom:6px;"></div>
+            <div id="tower-confirm-body" style="font-size:11px;color:#aab;line-height:1.6;margin-bottom:8px;"></div>
+            <div style="display:flex;gap:6px;">
+              <button id="tower-confirm-ok" class="tool-btn" style="border-color:#44ff88;color:#44ff88;">実行</button>
+              <button id="tower-confirm-cancel" class="tool-btn" style="border-color:#555;color:#aaa;">戻る</button>
+            </div>
           </div>
         </div>
 
@@ -548,11 +556,19 @@ body {
           <div class="stat" id="ei-row-in"><span>供給量</span><span class="stat-val" id="ei-in" style="color:#44bbff">-</span></div>
           <div class="stat" id="ei-row-out"><span>消費量</span><span class="stat-val" id="ei-out" style="color:#ffaa33">-</span></div>
           <div class="stat" id="ei-row-util"><span>稼働率</span><span class="stat-val" id="ei-util">-</span></div>
-          <div style="margin-top:8px">
+          <div id="edge-buttons" style="margin-top:8px">
             <button id="btn-edge-upgrade" class="tool-btn" style="border-color:#00aaaa;color:#44ccee">強化 <span class="cost">$15</span></button>
             <button id="btn-edge-reverse" class="tool-btn" style="border-color:#4488ff;color:#66aaff">反転</button>
             <button id="btn-edge-toggle" class="tool-btn" style="border-color:#664400">停止</button>
             <button id="btn-edge-destroy" class="tool-btn" style="border-color:#cc3333;color:#ff6666">撤去</button>
+          </div>
+          <div id="edge-confirm" style="display:none;margin-top:8px;background:#111828;border:1px solid #1a2040;border-radius:4px;padding:8px;">
+            <div id="edge-confirm-title" style="font-size:12px;font-weight:bold;color:#eee;margin-bottom:6px;"></div>
+            <div id="edge-confirm-body" style="font-size:11px;color:#aab;line-height:1.6;margin-bottom:8px;"></div>
+            <div style="display:flex;gap:6px;">
+              <button id="edge-confirm-ok" class="tool-btn" style="border-color:#44ff88;color:#44ff88;">実行</button>
+              <button id="edge-confirm-cancel" class="tool-btn" style="border-color:#555;color:#aaa;">戻る</button>
+            </div>
           </div>
         </div>
 

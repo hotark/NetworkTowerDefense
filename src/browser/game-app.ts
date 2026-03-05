@@ -53,6 +53,7 @@ export class GameApp {
     selectedTool: 'generator',
     hoveredNodeId: null,
     dragPreview: null,
+    rangePreview: null,
   };
 
   private lastTime = 0;
@@ -71,6 +72,7 @@ export class GameApp {
 
   // スコア
   private latestScores: TwoAxisScores | null = null;
+
 
   // シミュレーションフロー
   private gameFlow!: GameFlow;
@@ -133,6 +135,7 @@ export class GameApp {
     this.ui.selectedNodeId = null;
     this.ui.selectedEdgeId = null;
     this.ui.dragPreview = null;
+    this.ui.rangePreview = null;
     this.repairingNodes.clear();
     this.repairingEdges.clear();
     this.baseRepairing = false;
@@ -236,6 +239,14 @@ export class GameApp {
 
       case 'deselect':
         this.handleDeselect();
+        break;
+
+      case 'show-range-preview':
+        this.ui.rangePreview = { nodeId: cb.nodeId, range: cb.range };
+        break;
+
+      case 'hide-range-preview':
+        this.ui.rangePreview = null;
         break;
     }
   }

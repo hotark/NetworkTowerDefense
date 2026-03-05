@@ -39,6 +39,7 @@ export interface UIState {
   selectedTool: NodeType;
   hoveredNodeId: NodeId | null;
   dragPreview: { fromId: NodeId; toX: number; toY: number } | null;
+  rangePreview?: { nodeId: NodeId; range: number } | null;
 }
 
 export type AssetMap = Map<string, HTMLImageElement>;
@@ -907,6 +908,40 @@ function drawRangePreview(
     ctx.beginPath(); ctx.arc(node.x, node.y, stats.range, 0, Math.PI * 2); ctx.stroke();
     ctx.setLineDash([]);
   }
+
+  // アップグレード後レンジプレビュー（確認ダイアログ表示中）
+  if (ui.rangePreview && ui.rangePreview.nodeId === ui.hoveredNodeId) {
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, ui.rangePreview.range, 0, Math.PI * 2);
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = 'rgba(68, 255, 136, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(68, 255, 136, 0.05)';
+    ctx.fill();
+    ctx.setLineDash([]);
+  }
+}
+
+/** 選択中タワーのアップグレードレンジプレビュー（hoveredでなくても描画） */
+function drawUpgradeRangePreview(
+  ctx: CanvasRenderingContext2D, state: GameState, ui: UIState,
+): void {
+  if (!ui.rangePreview) return;
+  const node = state.nodes.get(ui.rangePreview.nodeId);
+  if (!node) return;
+  // hoveredNodeId と一致する場合は drawRangePreview 内で描画済み
+  if (ui.hoveredNodeId === ui.rangePreview.nodeId) return;
+
+  ctx.beginPath();
+  ctx.arc(node.x, node.y, ui.rangePreview.range, 0, Math.PI * 2);
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(68, 255, 136, 0.5)';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(68, 255, 136, 0.05)';
+  ctx.fill();
+  ctx.setLineDash([]);
 }
 
 // ── エフェクト描画 ──
@@ -1077,6 +1112,7 @@ export function render(
   drawEnemyBullets(ctx, state);
   drawEffects(ctx, state);
   drawRangePreview(ctx, state, config, ui);
+  drawUpgradeRangePreview(ctx, state, ui);
 
   // カメラ変換をリセット（HUDはスクリーン座標で描画されるため）
   resetTransform(ctx);

@@ -7,6 +7,7 @@ import type { GameConfig } from '@core/config';
 import {
   getTowerLevelStats, getEdgeLevelStats,
   getUpgradeCost, getEdgeUpgradeCost, getUpgradeDuration,
+  getTowerCost,
 } from '@core/config';
 import type { GameState } from '@core/state';
 import { chargeOnEdge } from '@core/network/logic';
@@ -48,7 +49,9 @@ export type HUDCallback =
   | { type: 'repair-edge'; edgeId: EdgeId }
   | { type: 'base-heal' }
   | { type: 'restart' }
-  | { type: 'deselect' };
+  | { type: 'deselect' }
+  | { type: 'show-range-preview'; nodeId: NodeId; range: number }
+  | { type: 'hide-range-preview' };
 
 // ── タワーラベル ──
 
@@ -65,6 +68,7 @@ const TOWER_LABELS: Record<NodeType, string> = {
 
 let currentSelectedNode: NodeId | null = null;
 let currentSelectedEdge: EdgeId | null = null;
+let currentState: GameState | null = null;
 
 // ── HUD作成 ──
 
@@ -128,12 +132,165 @@ export function createHUD(
   $('game-over')?.addEventListener('click', () => onAction({ type: 'restart' }));
   $('game-victory')?.addEventListener('click', () => onAction({ type: 'restart' }));
 
-  // タワー操作ボタン
+  // ── インライン確認UI制御 ──
+
+  let towerConfirmFn: (() => void) | null = null;
+  let towerConfirmCloseFn: (() => void) | null = null;
+  let edgeConfirmFn: (() => void) | null = null;
+
+  function showTowerConfirm(title: string, bodyHTML: string, onExec: () => void, onCloseExtra?: () => void): void {
+    const btns = $('tower-buttons');
+    const confirm = $('tower-confirm');
+    const titleEl = $('tower-confirm-title');
+    const bodyEl = $('tower-confirm-body');
+    if (!btns || !confirm || !titleEl || !bodyEl) return;
+    btns.style.display = 'none';
+    titleEl.textContent = title;
+    bodyEl.innerHTML = bodyHTML;
+    towerConfirmFn = onExec;
+    towerConfirmCloseFn = onCloseExtra ?? null;
+    confirm.style.display = '';
+  }
+
+  function hideTowerConfirm(): void {
+    const btns = $('tower-buttons');
+    const confirm = $('tower-confirm');
+    if (btns) btns.style.display = '';
+    if (confirm) confirm.style.display = 'none';
+    if (towerConfirmCloseFn) towerConfirmCloseFn();
+    towerConfirmFn = null;
+    towerConfirmCloseFn = null;
+  }
+
+  $('tower-confirm-ok')?.addEventListener('click', () => {
+    const fn = towerConfirmFn;
+    hideTowerConfirm();
+    if (fn) fn();
+  });
+  $('tower-confirm-cancel')?.addEventListener('click', () => hideTowerConfirm());
+
+  function showEdgeConfirm(title: string, bodyHTML: string, onExec: () => void): void {
+    const btns = $('edge-buttons');
+    const confirm = $('edge-confirm');
+    const titleEl = $('edge-confirm-title');
+    const bodyEl = $('edge-confirm-body');
+    if (!btns || !confirm || !titleEl || !bodyEl) return;
+    btns.style.display = 'none';
+    titleEl.textContent = title;
+    bodyEl.innerHTML = bodyHTML;
+    edgeConfirmFn = onExec;
+    confirm.style.display = '';
+  }
+
+  function hideEdgeConfirm(): void {
+    const btns = $('edge-buttons');
+    const confirm = $('edge-confirm');
+    if (btns) btns.style.display = '';
+    if (confirm) confirm.style.display = 'none';
+    edgeConfirmFn = null;
+  }
+
+  $('edge-confirm-ok')?.addEventListener('click', () => {
+    const fn = edgeConfirmFn;
+    hideEdgeConfirm();
+    if (fn) fn();
+  });
+  $('edge-confirm-cancel')?.addEventListener('click', () => hideEdgeConfirm());
+
+  // ── ステータス差分表示ヘルパー ──
+
+  function diffLine(label: string, cur: number, next: number, unit: string, inverse?: boolean): string {
+    const diff = next - cur;
+    if (diff === 0) return `<div style="color:#667">${label}: ${cur}${unit}</div>`;
+    const isGood = inverse ? diff < 0 : diff > 0;
+    const color = isGood ? '#44ff88' : '#ff4466';
+    const sign = diff > 0 ? '+' : '';
+    return `<div>${label}: ${cur}${unit} → <span style="color:${color}">${next}${unit}</span> <span style="color:${color};font-size:10px">(${sign}${Math.round(diff * 100) / 100}${unit})</span></div>`;
+  }
+
+  function buildTowerUpgradeBody(
+    state: GameState, cfg: GameConfig, nodeId: NodeId,
+  ): { title: string; body: string; nextRange?: number } | null {
+    const node = state.nodes.get(nodeId);
+    if (!node || node.level >= cfg.MAX_LEVEL) return null;
+    const cur = getTowerLevelStats(cfg, node.type, node.level);
+    const nxt = getTowerLevelStats(cfg, node.type, node.level + 1);
+    const cost = getUpgradeCost(cfg, node.type, node.level);
+    const dur = getUpgradeDuration(cfg, node.level);
+    const label = TOWER_LABELS[node.type] || node.type;
+
+    const title = `${label} Lv.${node.level} → Lv.${node.level + 1}`;
+    const lines: string[] = [];
+    lines.push(`<div style="color:#888;margin-bottom:4px">コスト: <span style="color:#ffcc00">$${cost}</span> / 所要: ${dur}s</div>`);
+    lines.push(diffLine('HP', cur.hp, nxt.hp, ''));
+
+    if (node.type === 'sniper' || node.type === 'rapid' || node.type === 'cannon') {
+      lines.push(diffLine('射程', cur.range ?? 0, nxt.range ?? 0, ''));
+      lines.push(diffLine('攻撃力', cur.damage ?? 0, nxt.damage ?? 0, ''));
+      lines.push(diffLine('装填', cur.cooldown ?? 0, nxt.cooldown ?? 0, 's', true));
+      lines.push(diffLine('消費弾薬', cur.ammoPerShot ?? 0, nxt.ammoPerShot ?? 0, ''));
+    } else if (node.type === 'generator') {
+      lines.push(diffLine('生成間隔', cur.interval ?? 0, nxt.interval ?? 0, 's', true));
+      lines.push(diffLine('保持', cur.holdTime, nxt.holdTime, 's', true));
+    } else if (node.type === 'distributor') {
+      lines.push(diffLine('分配数', cur.maxFanout ?? 0, nxt.maxFanout ?? 0, '方向'));
+      lines.push(diffLine('保持', cur.holdTime, nxt.holdTime, 's', true));
+    } else if (node.type === 'repeater') {
+      lines.push(diffLine('ブースト', cur.chargeBoost ?? 0, nxt.chargeBoost ?? 0, ''));
+      lines.push(diffLine('保持', cur.holdTime, nxt.holdTime, 's', true));
+    }
+
+    const nextRange = (nxt.range != null && cur.range != null && nxt.range !== cur.range) ? nxt.range : undefined;
+    return { title, body: lines.join(''), nextRange };
+  }
+
+  function buildEdgeUpgradeBody(
+    state: GameState, cfg: GameConfig, edgeId: EdgeId,
+  ): { title: string; body: string } | null {
+    const edge = state.edges.get(edgeId);
+    if (!edge || edge.level >= cfg.MAX_LEVEL) return null;
+    const cur = getEdgeLevelStats(cfg, edge.level);
+    const nxt = getEdgeLevelStats(cfg, edge.level + 1);
+    const cost = getEdgeUpgradeCost(cfg, edge.level);
+    const dur = getUpgradeDuration(cfg, edge.level);
+
+    const title = `接続 Lv.${edge.level} → Lv.${edge.level + 1}`;
+    const lines: string[] = [];
+    lines.push(`<div style="color:#888;margin-bottom:4px">コスト: <span style="color:#ffcc00">$${cost}</span> / 所要: ${dur}s</div>`);
+    lines.push(diffLine('HP', cur.hp, nxt.hp, ''));
+    lines.push(diffLine('容量', cur.capacity, nxt.capacity, ''));
+    lines.push(diffLine('速度', cur.speedMultiplier, nxt.speedMultiplier, '×'));
+    return { title, body: lines.join('') };
+  }
+
+  // ── タワー操作ボタン（インライン確認付き） ──
+
   $('btn-upgrade')?.addEventListener('click', () => {
-    if (currentSelectedNode) onAction({ type: 'upgrade-tower', nodeId: currentSelectedNode });
+    if (!currentSelectedNode || !currentState) return;
+    const info = buildTowerUpgradeBody(currentState, config, currentSelectedNode);
+    if (!info) return;
+    const nodeId = currentSelectedNode;
+    if (info.nextRange != null) {
+      onAction({ type: 'show-range-preview', nodeId, range: info.nextRange });
+    }
+    showTowerConfirm(info.title, info.body, () => {
+      onAction({ type: 'upgrade-tower', nodeId });
+    }, () => {
+      onAction({ type: 'hide-range-preview' });
+    });
   });
   $('btn-destroy')?.addEventListener('click', () => {
-    if (currentSelectedNode) onAction({ type: 'destroy-tower', nodeId: currentSelectedNode });
+    if (!currentSelectedNode || !currentState) return;
+    const node = currentState.nodes.get(currentSelectedNode);
+    if (!node) return;
+    const nodeId = currentSelectedNode;
+    const label = TOWER_LABELS[node.type] || node.type;
+    const refundAmt = Math.round(getTowerCost(config, node.type) * 0.5);
+    showTowerConfirm(
+      `${label} を撤去`,
+      `<div>返却: <span style="color:#ffcc00">$${refundAmt}</span></div><div style="color:#ff6666;margin-top:4px">接続エッジも削除されます</div>`,
+      () => onAction({ type: 'destroy-tower', nodeId }),
+    );
   });
   $('btn-toggle-active')?.addEventListener('click', () => {
     if (currentSelectedNode) onAction({ type: 'toggle-tower', nodeId: currentSelectedNode });
@@ -142,15 +299,35 @@ export function createHUD(
     if (currentSelectedNode) onAction({ type: 'repair-tower', nodeId: currentSelectedNode });
   });
 
-  // エッジ操作ボタン
+  // ── エッジ操作ボタン（インライン確認付き） ──
+
   $('btn-edge-upgrade')?.addEventListener('click', () => {
-    if (currentSelectedEdge) onAction({ type: 'upgrade-edge', edgeId: currentSelectedEdge });
+    if (!currentSelectedEdge || !currentState) return;
+    const info = buildEdgeUpgradeBody(currentState, config, currentSelectedEdge);
+    if (!info) return;
+    const edgeId = currentSelectedEdge;
+    showEdgeConfirm(info.title, info.body, () => {
+      onAction({ type: 'upgrade-edge', edgeId });
+    });
   });
   $('btn-edge-destroy')?.addEventListener('click', () => {
-    if (currentSelectedEdge) onAction({ type: 'destroy-edge', edgeId: currentSelectedEdge });
+    if (!currentSelectedEdge) return;
+    const edgeId = currentSelectedEdge;
+    const refundAmt = Math.round(config.edgeCost * 0.5);
+    showEdgeConfirm(
+      '接続を撤去',
+      `<div>返却: <span style="color:#ffcc00">$${refundAmt}</span></div>`,
+      () => onAction({ type: 'destroy-edge', edgeId }),
+    );
   });
   $('btn-edge-reverse')?.addEventListener('click', () => {
-    if (currentSelectedEdge) onAction({ type: 'reverse-edge', edgeId: currentSelectedEdge });
+    if (!currentSelectedEdge) return;
+    const edgeId = currentSelectedEdge;
+    showEdgeConfirm(
+      '接続の方向を反転',
+      '<div style="color:#ffaa33">輸送中のパケットは消失します</div>',
+      () => onAction({ type: 'reverse-edge', edgeId }),
+    );
   });
   $('btn-edge-toggle')?.addEventListener('click', () => {
     if (currentSelectedEdge) onAction({ type: 'toggle-edge', edgeId: currentSelectedEdge });
@@ -265,8 +442,18 @@ export function updateTowerPanel(
   config: GameConfig,
   nodeId: NodeId | null,
 ): void {
-  currentSelectedNode = nodeId;
+  currentState = state;
   const $ = (id: string) => document.getElementById(id);
+
+  // 選択が変わったら確認表示をリセット
+  if (nodeId !== currentSelectedNode) {
+    const tBtns = $('tower-buttons');
+    const tConf = $('tower-confirm');
+    if (tBtns) tBtns.style.display = '';
+    if (tConf) tConf.style.display = 'none';
+  }
+  currentSelectedNode = nodeId;
+
   const panel = $('tower-info');
   const infoEmpty = $('info-empty');
   const edgePanel = $('edge-info');
@@ -438,8 +625,18 @@ export function updateEdgePanel(
   config: GameConfig,
   edgeId: EdgeId | null,
 ): void {
-  currentSelectedEdge = edgeId;
+  currentState = state;
   const $ = (id: string) => document.getElementById(id);
+
+  // 選択が変わったら確認表示をリセット
+  if (edgeId !== currentSelectedEdge) {
+    const eBtns = $('edge-buttons');
+    const eConf = $('edge-confirm');
+    if (eBtns) eBtns.style.display = '';
+    if (eConf) eConf.style.display = 'none';
+  }
+  currentSelectedEdge = edgeId;
+
   const panel = $('edge-info');
   const infoEmpty = $('info-empty');
   const towerPanel = $('tower-info');

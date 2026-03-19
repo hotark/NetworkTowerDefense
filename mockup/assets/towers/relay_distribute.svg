@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Relay Distribute: ゴールド系ハブ -->
+  <path d="M20 12 L28 12 L34 20 L34 34 L28 42 L20 42 L14 34 L14 20 Z" fill="#332a00" stroke="#ffaa00" stroke-width="1.2"/>
+  <circle cx="24" cy="26" r="5" fill="#221800" stroke="#ffaa00" stroke-width="1.2"/>
+  <circle cx="24" cy="26" r="2" fill="#ffaa00" opacity="0.4"/>
+  <line x1="24" y1="21" x2="24" y2="16" stroke="#ffaa00" stroke-width="1" opacity="0.6"/>
+  <line x1="19" y1="26" x2="14" y2="26" stroke="#ffaa00" stroke-width="1" opacity="0.6"/>
+  <line x1="29" y1="26" x2="34" y2="26" stroke="#ffaa00" stroke-width="1" opacity="0.6"/>
+</svg>

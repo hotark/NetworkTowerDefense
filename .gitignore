@@ -1,0 +1,11 @@
+# Claude Code local settings
+.claude/settings.local.json
+.claude/logs/
+
+# 内部資料
+__history__/
+__note__/
+__ref__/
+
+# mockup内のClaude Codeログ
+mockup/.claude/

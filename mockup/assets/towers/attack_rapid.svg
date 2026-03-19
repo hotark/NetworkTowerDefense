@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Attack Rapid: オレンジ系、ツインバレル -->
+  <rect x="19" y="5" width="3" height="15" rx="0.8" fill="#553300" stroke="#ff8800" stroke-width="0.8"/>
+  <rect x="27" y="5" width="3" height="15" rx="0.8" fill="#553300" stroke="#ff8800" stroke-width="0.8"/>
+  <rect x="18" y="4" width="5" height="2" rx="1" fill="#ff8800" opacity="0.7"/>
+  <rect x="26" y="4" width="5" height="2" rx="1" fill="#ff8800" opacity="0.7"/>
+  <path d="M16 19 L33 19 L36 28 L34 42 L15 42 L13 28 Z" fill="#332200" stroke="#ff8800" stroke-width="1.2"/>
+  <circle cx="24" cy="30" r="4" fill="#442800" stroke="#ff8800" stroke-width="1"/>
+  <circle cx="24" cy="30" r="1.5" fill="#ff8800" opacity="0.4"/>
+</svg>

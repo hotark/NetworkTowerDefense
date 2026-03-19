@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Attacker Enemy: 赤系攻撃機 -->
+  <path d="M24 4 L34 14 L36 30 L30 44 L18 44 L12 30 L14 14 Z" fill="#cc3333" stroke="#ff6666" stroke-width="1.5"/>
+  <ellipse cx="24" cy="14" rx="4" ry="5" fill="#aa2222" stroke="#ff6666" stroke-width="1"/>
+  <ellipse cx="24" cy="13" rx="2" ry="3" fill="#ff6666" opacity="0.4"/>
+  <!-- 攻撃用ウィング（鋭い） -->
+  <path d="M14 18 L2 24 L6 32 L14 28 Z" fill="#aa2828" stroke="#ff6666" stroke-width="1"/>
+  <path d="M34 18 L46 24 L42 32 L34 28 Z" fill="#aa2828" stroke="#ff6666" stroke-width="1"/>
+  <!-- ウィング先端砲 -->
+  <circle cx="3" cy="24" r="2.5" fill="#ff6666" opacity="0.8"/>
+  <circle cx="45" cy="24" r="2.5" fill="#ff6666" opacity="0.8"/>
+  <!-- エンジン -->
+  <rect x="18" y="44" width="5" height="4" rx="1" fill="#ff6666" opacity="0.6"/>
+  <rect x="25" y="44" width="5" height="4" rx="1" fill="#ff6666" opacity="0.6"/>
+  <!-- 攻撃マーク -->
+  <line x1="20" y1="22" x2="28" y2="22" stroke="#ff6666" stroke-width="1.5" opacity="0.5"/>
+  <line x1="24" y1="18" x2="24" y2="26" stroke="#ff6666" stroke-width="1.5" opacity="0.5"/>
+</svg>

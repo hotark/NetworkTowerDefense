@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Tank: 青系・重装甲 -->
+  <path d="M24 6 L36 16 L38 34 L32 44 L16 44 L10 34 L12 16 Z" fill="#2244aa" stroke="#4488ff" stroke-width="1.8"/>
+  <rect x="14" y="18" width="20" height="14" rx="3" fill="#1a3388" stroke="#4488ff" stroke-width="1"/>
+  <circle cx="24" cy="25" r="5" fill="#112266" stroke="#4488ff" stroke-width="1.2"/>
+  <circle cx="24" cy="25" r="2" fill="#4488ff" opacity="0.5"/>
+  <path d="M12 20 L4 26 L6 30 L12 28 Z" fill="#1a3388" stroke="#4488ff" stroke-width="0.8"/>
+  <path d="M36 20 L44 26 L42 30 L36 28 Z" fill="#1a3388" stroke="#4488ff" stroke-width="0.8"/>
+  <rect x="17" y="42" width="5" height="4" rx="1" fill="#4488ff" opacity="0.5"/>
+  <rect x="26" y="42" width="5" height="4" rx="1" fill="#4488ff" opacity="0.5"/>
+</svg>

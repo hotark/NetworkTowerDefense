@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ネットワークタワーディフェンス - モックアップ</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- ステータスバー -->
+    <div id="status-bar">
+      <span class="stat">所持金: <span id="stat-money">$600</span></span>
+      <span class="stat">拠点: <span id="stat-hp">Lv1 20/20</span></span>
+      <button id="base-detail-btn" class="small-btn">拠点詳細</button>
+      <span class="stat">ウェーブ: <span id="stat-wave">0/30</span></span>
+      <button id="wave-btn">ウェーブ1 開始</button>
+    </div>
+
+    <div id="main-area">
+      <!-- Canvas -->
+      <canvas id="game-canvas"></canvas>
+
+      <!-- 右パネル -->
+      <div id="panel">
+        <!-- ツールバー -->
+        <div id="toolbar"></div>
+
+        <!-- タブ -->
+        <div id="tab-bar"></div>
+
+        <!-- 情報パネル -->
+        <div id="info-panel">
+          <div id="info-content">
+            <div class="hint">タワーやエッジを選択、または上のツールで建設</div>
+          </div>
+          <div id="info-actions"></div>
+        </div>
+
+        <!-- ログパネル -->
+        <div id="log-panel" style="display:none">
+          <pre id="log-content"></pre>
+        </div>
+
+        <!-- 確認ダイアログ（パネル内） -->
+        <div id="dialog"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

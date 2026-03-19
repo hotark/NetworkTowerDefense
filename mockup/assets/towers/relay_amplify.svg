@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Relay Amplify: 青系スリム、増幅コイル -->
+  <path d="M21 8 L27 8 L32 14 L32 38 L27 44 L21 44 L16 38 L16 14 Z" fill="#0a2233" stroke="#44bbff" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="4" fill="#0a1a2a" stroke="#44bbff" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="2" fill="#44bbff" opacity="0.4"/>
+  <path d="M20 10 L24 4 L28 10" fill="none" stroke="#44bbff" stroke-width="1.5" opacity="0.6"/>
+  <ellipse cx="24" cy="24" rx="8" ry="3" fill="none" stroke="#44bbff" stroke-width="0.8" opacity="0.4"/>
+</svg>

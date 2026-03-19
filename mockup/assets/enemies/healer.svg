@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Saboteur (slow attacker): 黄系・破壊工作機 -->
+  <path d="M24 6 L32 14 L34 30 L30 42 L18 42 L14 30 L16 14 Z" fill="#aa8800" stroke="#ffcc00" stroke-width="1.5"/>
+  <ellipse cx="24" cy="16" rx="4" ry="4" fill="#886600" stroke="#ffcc00" stroke-width="1"/>
+  <line x1="20" y1="24" x2="28" y2="24" stroke="#ffcc00" stroke-width="2" opacity="0.6"/>
+  <line x1="24" y1="20" x2="24" y2="28" stroke="#ffcc00" stroke-width="2" opacity="0.6"/>
+  <path d="M14 22 L4 28 L8 34 L14 30 Z" fill="#886600" stroke="#ffcc00" stroke-width="0.8"/>
+  <path d="M34 22 L44 28 L40 34 L34 30 Z" fill="#886600" stroke="#ffcc00" stroke-width="0.8"/>
+  <circle cx="5" cy="28" r="2" fill="#ffcc00" opacity="0.6"/>
+  <circle cx="43" cy="28" r="2" fill="#ffcc00" opacity="0.6"/>
+  <rect x="19" y="40" width="4" height="4" rx="1" fill="#ffcc00" opacity="0.5"/>
+  <rect x="25" y="40" width="4" height="4" rx="1" fill="#ffcc00" opacity="0.5"/>
+</svg>

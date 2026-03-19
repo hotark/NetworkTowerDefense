@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Fast: 緑系・細身の高速機 -->
+  <path d="M24 2 L30 14 L32 34 L28 44 L20 44 L16 34 L18 14 Z" fill="#33cc33" stroke="#66ff66" stroke-width="1.5"/>
+  <ellipse cx="24" cy="12" rx="3" ry="4" fill="#229922" stroke="#66ff66" stroke-width="1"/>
+  <ellipse cx="24" cy="11" rx="1.5" ry="2.5" fill="#66ff66" opacity="0.4"/>
+  <path d="M18 18 L8 24 L10 28 L16 26 Z" fill="#28aa28" stroke="#66ff66" stroke-width="0.8"/>
+  <path d="M30 18 L40 24 L38 28 L32 26 Z" fill="#28aa28" stroke="#66ff66" stroke-width="0.8"/>
+  <rect x="21" y="42" width="3" height="5" rx="1" fill="#66ff66" opacity="0.7"/>
+  <rect x="25" y="42" width="3" height="5" rx="1" fill="#66ff66" opacity="0.7"/>
+</svg>

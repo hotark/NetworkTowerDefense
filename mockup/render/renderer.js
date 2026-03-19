@@ -67,6 +67,7 @@ export class Renderer {
     this.drawDragPreview(ctx, state, visual);
     this.drawConnectRange(ctx, state, visual);
     this.drawUpgradeRangePreview(ctx, state, visual);
+    this.drawGameEnd(ctx, state);
   }
 
   /** グリッド背景（ref準拠） */
@@ -458,11 +459,13 @@ export class Renderer {
         ctx.fillText(tower.status === 'building' ? '建設中' : '強化中', tower.x, barY - 2);
       }
 
-      // レベル表示
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(`Lv${tower.level}`, tower.x, tower.y + TOWER_DRAW_SIZE / 2 + 12);
+      // レベル表示（小さく控えめに）
+      if (tower.level > 1) {
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '7px monospace';
+        ctx.textAlign = 'left';
+        ctx.fillText(`${tower.level}`, tower.x + TOWER_DRAW_SIZE / 2 - 2, tower.y - TOWER_DRAW_SIZE / 2 + 8);
+      }
 
       // HPバー
       if (!isBuilding && tower.hp < tower.maxHp) {
@@ -742,5 +745,43 @@ export class Renderer {
     ctx.fillText(`現在: ${preview.currentRange}px`, tower.x, tower.y + preview.currentRange + 12);
     ctx.fillStyle = 'rgba(68,255,136,0.8)';
     ctx.fillText(`強化後: ${preview.nextRange}px`, tower.x, tower.y + preview.nextRange + 12);
+  }
+
+  drawGameEnd(ctx, state) {
+    if (state.gameResult === 'playing') return;
+
+    // 半透明オーバーレイ
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+    const cx = CANVAS_W / 2;
+    const cy = CANVAS_H / 2;
+
+    if (state.gameResult === 'victory') {
+      // 勝利
+      ctx.fillStyle = '#44ff88';
+      ctx.font = 'bold 48px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('VICTORY', cx, cy - 30);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '18px monospace';
+      ctx.fillText('全30ウェーブクリア！', cx, cy + 20);
+    } else {
+      // 敗北
+      ctx.fillStyle = '#ff4444';
+      ctx.font = 'bold 48px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('DEFEAT', cx, cy - 30);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '18px monospace';
+      ctx.fillText(`ウェーブ ${state.waveManager.currentWave} で敗北`, cx, cy + 20);
+    }
+
+    ctx.fillStyle = '#888888';
+    ctx.font = '14px monospace';
+    ctx.fillText('リロードで再開', cx, cy + 60);
+    ctx.textBaseline = 'alphabetic';
   }
 }

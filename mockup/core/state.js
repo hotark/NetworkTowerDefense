@@ -4,7 +4,7 @@ import {
   TOWER_TYPES, EDGE_DEF, ENEMY_TYPES,
   START_MONEY, BASE_HP, PACKET_BASE_SPEED, BULLET_SPEED,
   SELL_REFUND_RATE, SPOT_RADIUS, REPAIR_RATE, EDGE_REPAIR_RATE, BASE_REPAIR_RATE,
-  UPGRADE_TIMES,
+  UPGRADE_TIMES, ENEMY_WAVES,
 } from './config.js';
 import { PATH, SPOTS, BASE_POS } from './map.js';
 import { Tower } from './tower.js';
@@ -38,11 +38,11 @@ export class GameState {
     this.baseBuildTimer = 0;
     // 拠点レベル別: [maxHp, attackDamage, attackRange, attackCooldown, upgradeCost]
     this.baseLevels = [
-      { maxHp: 20,  damage: 10,  range: 120, cooldown: 2.0, upgradeCost: 0 },
-      { maxHp: 35,  damage: 20,  range: 140, cooldown: 1.8, upgradeCost: 200 },
-      { maxHp: 55,  damage: 35,  range: 160, cooldown: 1.5, upgradeCost: 500 },
-      { maxHp: 80,  damage: 60,  range: 180, cooldown: 1.2, upgradeCost: 1200 },
-      { maxHp: 120, damage: 100, range: 200, cooldown: 1.0, upgradeCost: 3000 },
+      { maxHp: 50,  damage: 10,  range: 120, cooldown: 2.0, upgradeCost: 0 },
+      { maxHp: 80,  damage: 20,  range: 140, cooldown: 1.8, upgradeCost: 200 },
+      { maxHp: 120, damage: 35,  range: 160, cooldown: 1.5, upgradeCost: 500 },
+      { maxHp: 180, damage: 60,  range: 180, cooldown: 1.2, upgradeCost: 1200 },
+      { maxHp: 250, damage: 100, range: 200, cooldown: 1.0, upgradeCost: 3000 },
     ];
     this.baseAttackCooldown = 0;
     this.waveManager = new WaveManager();
@@ -353,7 +353,8 @@ export class GameState {
 
       if (tower.type === 'generator_burst') {
         // charge=genAmountの1パケットをラウンドロビンで1エッジに送信
-        const edge = outEdges[tower.nextOutIdx % outEdges.length];
+        tower.nextOutIdx = tower.nextOutIdx % outEdges.length;
+        const edge = outEdges[tower.nextOutIdx];
         tower.nextOutIdx = (tower.nextOutIdx + 1) % outEdges.length;
         if (edge.canAccept(this.packets, ld.genAmount)) {
           this.packets.push(new Packet(edge.id, ld.genAmount));
@@ -421,31 +422,37 @@ export class GameState {
       if (outEdges.length === 0) continue;
 
       if (tower.type === 'relay_amplify') {
-        // リピーター: 1パケット取り出し、chargeを倍率かけて送信（帯域上限まで）
+        // リピーター: パケットサイズに定数加算して1パケットとして転送
         const pkt = tower.holdQueue.shift();
-        const amplified = pkt.charge * Math.floor(tower.levelDef.amplifyRate);
-        const edge = outEdges[tower.nextOutIdx % outEdges.length];
+        const newCharge = pkt.charge + tower.levelDef.amplifyAdd;
+        tower.nextOutIdx = tower.nextOutIdx % outEdges.length;
+        const edge = outEdges[tower.nextOutIdx];
         tower.nextOutIdx = (tower.nextOutIdx + 1) % outEdges.length;
         const remaining = edge.levelDef.bandwidth - edge.chargeOnEdge(this.packets);
-        const sendCharge = Math.min(amplified, Math.max(0, remaining));
+        const sendCharge = Math.min(newCharge, Math.max(0, remaining));
         if (sendCharge > 0) {
           this.packets.push(new Packet(edge.id, sendCharge));
         }
       } else if (tower.type === 'relay_distribute') {
-        // ディストリビューター: holdQueueのchargeを合算→1ずつラウンドロビンで分配
-        let totalCharge = 0;
-        while (tower.holdQueue.length > 0) {
-          totalCharge += tower.holdQueue.shift().charge;
+        // ディストリビューター: ラウンドロビンで1ずつ割り当て→集計して同時送信
+        const pkt = tower.holdQueue.shift();
+        const n = outEdges.length;
+        if (n === 0) continue;
+        tower.nextOutIdx = tower.nextOutIdx % n;
+        // ラウンドロビンで各エッジへの割り当て数を決定（全エッジ対象）
+        const sendMap = new Map();
+        for (let i = 0; i < pkt.charge; i++) {
+          const edge = outEdges[(tower.nextOutIdx + i) % n];
+          sendMap.set(edge.id, (sendMap.get(edge.id) || 0) + 1);
         }
-        const numEdges = Math.min(outEdges.length, tower.levelDef.maxOutputs);
-        for (let i = 0; i < totalCharge; i++) {
-          const idx = (tower.nextOutIdx + i) % numEdges;
-          const edge = outEdges[idx];
-          if (edge.canAccept(this.packets, 1)) {
-            this.packets.push(new Packet(edge.id, 1));
+        tower.nextOutIdx = (tower.nextOutIdx + pkt.charge) % n;
+        // 割り当て分を同時送信
+        for (const [edgeId, sz] of sendMap) {
+          const edge = this.getEdge(edgeId);
+          if (edge && edge.canAccept(this.packets, sz)) {
+            this.packets.push(new Packet(edge.id, sz));
           }
         }
-        tower.nextOutIdx = (tower.nextOutIdx + totalCharge) % numEdges;
       }
     }
   }
@@ -732,10 +739,10 @@ export class GameState {
       this.gameResult = 'defeat';
       this.log('敗北！拠点が破壊されました');
     }
-    if (this.waveManager.allWavesComplete ||
-        (this.waveManager.currentWave >= 10 && this.waveManager.spawnComplete)) {
+    const wm = this.waveManager;
+    if (wm.currentWave >= ENEMY_WAVES.length && wm.spawnComplete) {
       const alive = this.enemies.some(e => !e.dead);
-      if (!alive && this.waveManager.spawnQueue.length === 0) {
+      if (!alive && wm.spawnQueue.length === 0) {
         this.gameResult = 'victory';
         this.log('勝利！全ウェーブクリア！');
       }

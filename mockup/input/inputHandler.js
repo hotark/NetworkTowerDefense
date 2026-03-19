@@ -94,6 +94,8 @@ export class InputHandler {
         this.selectedTower = tower.id;
         this.selectedEdge = null;
         this.selectedBase = false;
+        this.activeTab = 'info';
+        this.updateTabs();
         this.updateInfoPanel();
         break;
       }
@@ -174,6 +176,8 @@ export class InputHandler {
         this.selectedTower = tower.id;
         this.selectedEdge = null;
         this.selectedBase = false;
+        this.activeTab = 'info';
+        this.updateTabs();
         this.updateInfoPanel();
         return;
       }
@@ -185,6 +189,8 @@ export class InputHandler {
       this.selectedBase = true;
       this.selectedTower = null;
       this.selectedEdge = null;
+      this.activeTab = 'info';
+      this.updateTabs();
       this.updateInfoPanel();
       return;
     }
@@ -200,6 +206,8 @@ export class InputHandler {
         this.selectedEdge = edge.id;
         this.selectedTower = null;
         this.selectedBase = false;
+        this.activeTab = 'info';
+        this.updateTabs();
         this.updateInfoPanel();
         return;
       }
@@ -327,8 +335,8 @@ export class InputHandler {
       if (def.category === 'generator') {
         html += `<div>生成速度: ${ld.genRate}/秒 | 量: ${ld.genAmount}</div>`;
       } else if (def.category === 'relay') {
-        if (ld.amplifyRate) html += `<div>増幅率: x${ld.amplifyRate} | 処理間隔: ${ld.holdTime}秒</div>`;
-        if (ld.maxOutputs) html += `<div>最大出力: ${ld.maxOutputs} | 処理間隔: ${ld.holdTime}秒</div>`;
+        if (ld.amplifyAdd != null) html += `<div>サイズ加算: +${ld.amplifyAdd} | 処理間隔: ${ld.holdTime}秒</div>`;
+        if (ld.maxOutputs) html += `<div>分配先: ${ld.maxOutputs} | 処理間隔: ${ld.holdTime}秒</div>`;
       } else {
         html += `<div>火力: ${ld.damage} | 発射速度: ${ld.fireRate}/秒</div>`;
         html += `<div>弾薬消費: ${ld.packetCost} | 射程: ${ld.range}px</div>`;
@@ -359,7 +367,7 @@ export class InputHandler {
       if (tower.category === 'generator') {
         html += `<div>生成速度: ${ld.genRate}/秒 | 量: ${ld.genAmount}</div>`;
       } else if (tower.type === 'relay_amplify') {
-        html += `<div>増幅率: x${ld.amplifyRate} | 処理間隔: ${ld.holdTime}秒</div>`;
+        html += `<div>サイズ加算: +${ld.amplifyAdd} | 処理間隔: ${ld.holdTime}秒</div>`;
         html += `<div id="tower-queue-display">待ちパケット: ${tower.holdQueue.length}</div>`;
       } else if (tower.type === 'relay_distribute') {
         html += `<div>出力数: ${ld.maxOutputs} | 処理間隔: ${ld.holdTime}秒</div>`;
@@ -478,10 +486,11 @@ export class InputHandler {
       html += this.diffRow('生成速度', curLd.genRate, nextLd.genRate, '/秒');
       html += this.diffRow('生成量', curLd.genAmount, nextLd.genAmount);
     } else if (tower.type === 'relay_amplify') {
-      html += this.diffRow('増幅率', curLd.amplifyRate, nextLd.amplifyRate, 'x');
+      html += this.diffRow('サイズ加算', curLd.amplifyAdd, nextLd.amplifyAdd);
+      html += this.diffRow('処理間隔', curLd.holdTime, nextLd.holdTime, '秒');
     } else if (tower.type === 'relay_distribute') {
       html += this.diffRow('出力数', curLd.maxOutputs, nextLd.maxOutputs);
-      html += this.diffRow('処理量', curLd.throughput, nextLd.throughput);
+      html += this.diffRow('処理間隔', curLd.holdTime, nextLd.holdTime, '秒');
     } else {
       html += this.diffRow('火力', curLd.damage, nextLd.damage);
       html += this.diffRow('発射速度', curLd.fireRate, nextLd.fireRate, '/秒');

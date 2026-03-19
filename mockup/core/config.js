@@ -3,7 +3,7 @@
 export const CANVAS_W = 900;
 export const CANVAS_H = 700;
 export const FIXED_DT = 1 / 60;
-export const BASE_HP = 20;
+export const BASE_HP = 50;
 export const START_MONEY = 600;
 export const SELL_REFUND_RATE = 0.5;
 export const PACKET_BASE_SPEED = 120;
@@ -73,13 +73,13 @@ export const TOWER_TYPES = {
     repairCost: 20,
     connectRange: 300,
     color: '#44bbff',
-    // リピーター: 整数倍増幅(最大3倍)、処理遅め
+    // リピーター: パケットサイズに定数加算、処理遅め
     levels: [
-      { amplifyRate: 2, holdTime: 2.0,  upgradeCost: 0 },
-      { amplifyRate: 2, holdTime: 1.5,  upgradeCost: 15 },
-      { amplifyRate: 2, holdTime: 1.0,  upgradeCost: 70 },
-      { amplifyRate: 3, holdTime: 0.8,  upgradeCost: 300 },
-      { amplifyRate: 3, holdTime: 0.5,  upgradeCost: 900 },
+      { amplifyAdd: 1, holdTime: 2.0,  upgradeCost: 0 },
+      { amplifyAdd: 2, holdTime: 1.5,  upgradeCost: 15 },
+      { amplifyAdd: 3, holdTime: 1.0,  upgradeCost: 70 },
+      { amplifyAdd: 4, holdTime: 0.8,  upgradeCost: 300 },
+      { amplifyAdd: 5, holdTime: 0.5,  upgradeCost: 900 },
     ]
   },
   relay_distribute: {
@@ -180,50 +180,50 @@ export const ENEMY_TYPES = {
 };
 
 // ref準拠: 3段階レベル
+// damage = 拠点到達時の拠点ダメージ/秒
 export const ENEMY_LEVELS = {
-  normal: [
+  normal: [ // 量で押す・拠点ダメージ低い
     { hp: 80,   speed: 55,  reward: 20,  damage: 1 },
-    { hp: 500,  speed: 58,  reward: 55,  damage: 1 },
-    { hp: 4000, speed: 80,  reward: 110, damage: 2 },
+    { hp: 500,  speed: 58,  reward: 55,  damage: 2 },
+    { hp: 4000, speed: 80,  reward: 110, damage: 3 },
   ],
-  fast: [
+  fast: [ // 速い・拠点ダメージ低い
     { hp: 45,   speed: 100, reward: 15,  damage: 1 },
     { hp: 300,  speed: 115, reward: 65,  damage: 1 },
     { hp: 5000, speed: 135, reward: 130, damage: 2 },
   ],
-  tank: [
-    { hp: 350,   speed: 28, reward: 30,   damage: 1 },
-    { hp: 5000,  speed: 30, reward: 110,  damage: 2 },
-    { hp: 15000, speed: 45, reward: 280,  damage: 3 },
+  tank: [ // 硬い・拠点ダメージ高い
+    { hp: 350,   speed: 28, reward: 30,   damage: 2 },
+    { hp: 5000,  speed: 30, reward: 110,  damage: 4 },
+    { hp: 15000, speed: 45, reward: 280,  damage: 8 },
   ],
-  saboteur: [ // ref edgeAttacker
-    { hp: 120,  speed: 30, reward: 22,  damage: 1, attackRange: 60,  attackRate: 0.5, attackDamage: 5 },
-    { hp: 500,  speed: 40, reward: 75,  damage: 1, attackRange: 100, attackRate: 0.67, attackDamage: 5 },
-    { hp: 3000, speed: 50, reward: 180, damage: 2, attackRange: 200, attackRate: 1.0,  attackDamage: 8 },
+  saboteur: [ // 破壊工作（遅い・高ダメージ）拠点ダメージ中
+    { hp: 120,  speed: 20, reward: 22,  damage: 1, attackRange: 150, attackRate: 0.3,  attackDamage: 8 },
+    { hp: 500,  speed: 25, reward: 75,  damage: 2, attackRange: 200, attackRate: 0.4,  attackDamage: 15 },
+    { hp: 3000, speed: 30, reward: 180, damage: 4, attackRange: 250, attackRate: 0.5,  attackDamage: 25 },
   ],
-  raider: [ // ref towerAttacker
-    { hp: 200,  speed: 30, reward: 25,  damage: 1, attackRange: 50,  attackRate: 0.5,  attackDamage: 5 },
-    { hp: 750,  speed: 35, reward: 85,  damage: 1, attackRange: 150, attackRate: 0.59, attackDamage: 15 },
-    { hp: 5000, speed: 40, reward: 200, damage: 2, attackRange: 300, attackRate: 0.83, attackDamage: 30 },
+  raider: [ // 急襲（速い・低ダメージ・高頻度）拠点ダメージ低い
+    { hp: 200,  speed: 65, reward: 25,  damage: 1, attackRange: 150, attackRate: 1.5,  attackDamage: 2 },
+    { hp: 750,  speed: 75, reward: 85,  damage: 1, attackRange: 200, attackRate: 2.0,  attackDamage: 4 },
+    { hp: 5000, speed: 85, reward: 200, damage: 2, attackRange: 300, attackRate: 2.5,  attackDamage: 6 },
   ],
 };
 
-// ref準拠ボス
 export const BOSS_LEVELS = {
-  tank: [
-    { hp: 1800,  speed: 18, reward: 150,  damage: 2 },
-    { hp: 10000, speed: 20, reward: 420,  damage: 3 },
-    { hp: 50000, speed: 22, reward: 1000, damage: 5 },
+  tank: [ // ボスtank: 拠点ダメージ極高
+    { hp: 1800,  speed: 18, reward: 150,  damage: 5 },
+    { hp: 10000, speed: 20, reward: 420,  damage: 8 },
+    { hp: 50000, speed: 22, reward: 1000, damage: 15 },
   ],
-  saboteur: [ // ref edgeAttacker boss
-    { hp: 800,   speed: 30, reward: 120, damage: 1, attackRange: 50,  attackRate: 0.67, attackDamage: 5 },
-    { hp: 5000,  speed: 30, reward: 220, damage: 2, attackRange: 200, attackRate: 1.0,  attackDamage: 5 },
-    { hp: 15000, speed: 30, reward: 380, damage: 3, attackRange: 300, attackRate: 1.25, attackDamage: 8 },
+  saboteur: [ // 破壊工作ボス
+    { hp: 800,   speed: 30, reward: 120, damage: 3, attackRange: 180, attackRate: 0.5, attackDamage: 12 },
+    { hp: 5000,  speed: 30, reward: 220, damage: 5, attackRange: 250, attackRate: 0.7, attackDamage: 20 },
+    { hp: 15000, speed: 30, reward: 380, damage: 8, attackRange: 350, attackRate: 1.0, attackDamage: 30 },
   ],
-  raider: [ // ref towerAttacker boss
-    { hp: 900,   speed: 20, reward: 130, damage: 1, attackRange: 65,  attackRate: 0.83, attackDamage: 10 },
-    { hp: 5000,  speed: 20, reward: 250, damage: 2, attackRange: 300, attackRate: 1.0,  attackDamage: 30 },
-    { hp: 20000, speed: 20, reward: 400, damage: 3, attackRange: 500, attackRate: 2.0,  attackDamage: 50 },
+  raider: [ // 急襲ボス
+    { hp: 900,   speed: 20, reward: 130, damage: 2, attackRange: 180, attackRate: 2.0,  attackDamage: 5 },
+    { hp: 5000,  speed: 20, reward: 250, damage: 3, attackRange: 300, attackRate: 2.5,  attackDamage: 10 },
+    { hp: 20000, speed: 20, reward: 400, damage: 5, attackRange: 500, attackRate: 3.0,  attackDamage: 15 },
   ],
 };
 

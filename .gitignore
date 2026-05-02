@@ -85,3 +85,6 @@ Desktop.ini
 
 # Experimental / prototype
 mockup/
+
+# uloop outputs (keep settings.permissions.json)
+unity/.uloop/outputs/
